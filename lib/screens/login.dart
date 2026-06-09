@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../consumer/ai_scanning_screen.dart'; // Imports the consumer scanning screen file
+import '../consumer/ai_scanning_screen.dart';
+import '../Industrial_Client/design_studio.dart';
+import '../admin/admin_dashboard.dart';
 
 class LoginSelectionScreen extends StatefulWidget {
   const LoginSelectionScreen({super.key});
@@ -244,7 +246,7 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
           HoverButton(
             text: 'Continue as ${selectedRole?.split(" ").first ?? ""}',
             onTap: () {
-              // Navigates to AI Scanning screen only when Consumer role is selected
+              // --- আপডেট করা নেভিগেশন লজিক ---
               if (selectedRole == 'Consumer') {
                 Navigator.push(
                   context,
@@ -252,8 +254,22 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
                     builder: (context) => const AiScanningScreen(),
                   ),
                 );
+              } else if (selectedRole == 'Industrial Client') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProductionDesignSystemScreen(),
+                  ),
+                );
+              } else if (selectedRole == 'Administrator') {
+                // এখানে অ্যাডমিন ড্যাশবোর্ডে নেভিগেট করবে
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminDashboardScreen(),
+                  ),
+                );
               } else {
-                // Temporary feedback behavior for other roles
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Logging in as $selectedRole...')),
                 );
@@ -305,7 +321,6 @@ class _RoleCardState extends State<RoleCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          // Subtle pop-out animation trigger on desktop hover
           transform: Matrix4.diagonal3Values(
             isHovered ? 1.03 : 1.0,
             isHovered ? 1.03 : 1.0,
