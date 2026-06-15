@@ -52,7 +52,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             children: [
                               _buildQuickActionsCard(),
                               const SizedBox(height: 32),
-                              _buildSystemStatusCard(), // This card has been added here
+                              _buildSystemStatusCard(),
                             ],
                           ),
                         ),
@@ -65,7 +65,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         const SizedBox(height: 32),
                         _buildQuickActionsCard(),
                         const SizedBox(height: 32),
-                        _buildSystemStatusCard(), // Added here as well for mobile/tablet layout
+                        _buildSystemStatusCard(),
                       ],
                     );
                   }
@@ -83,24 +83,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Admin Dashboard',
-              style: TextStyle(
-                color: textDark,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
+        Expanded(
+          // Header text overflow প্রটেকশন
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Admin Dashboard',
+                style: TextStyle(
+                  color: textDark,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Welcome back, nafizhasansinha',
-              style: TextStyle(color: textMuted, fontSize: 15),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Welcome back, nafizhasansinha',
+                style: TextStyle(color: textMuted, fontSize: 15),
+              ),
+            ],
+          ),
         ),
         Row(
           children: [
@@ -384,12 +387,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 16),
+              // ১ নম্বর ফিক্স: মাঝখানের টেক্সটগুলোকে Expanded করে দেওয়া হয়েছে যেন তারা বাঁদিকের অংশকে চাপ না দেয়
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
+                      maxLines:
+                          1, // টেক্সট ১ লাইনের বেশি হলে কেটে যাবে (Overflow হবে না)
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: textDark,
                         fontSize: 15,
@@ -399,13 +406,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: textMuted, fontSize: 13),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(
+                width: 12,
+              ), // ডান এবং বাম পাশের কন্টেন্টের মাঝে সেফ স্পেস
+              // ২ নম্বর ফিক্স: ডান পাশের উইজেটকেও একটি নির্দিষ্ট বা মানানসই কাঠামোর মধ্যে আনা হয়েছে
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -513,15 +527,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Icon(icon, color: textDark, size: 20),
               const SizedBox(width: 14),
-              Text(
-                title,
-                style: TextStyle(
-                  color: textDark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                // কুইক অ্যাকশন টাইটেল লং হলেও যেন ভেঙে না যায়
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const Spacer(),
               AnimatedOpacity(
                 opacity: isHovered ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 150),
@@ -538,7 +556,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // --- 5. System Status Card (New Addition) ---
+  // --- 5. System Status Card ---
   Widget _buildSystemStatusCard() {
     return Container(
       width: double.infinity,
@@ -548,10 +566,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         gradient: const LinearGradient(
           begin: Alignment.bottomLeft,
           end: Alignment.topRight,
-          colors: [
-            Color(0xFF4F46E5), // Royal blue-purple tone
-            Color(0xFF3B82F6), // Bright blue tone
-          ],
+          colors: [Color(0xFF4F46E5), Color(0xFF3B82F6)],
         ),
         boxShadow: [
           BoxShadow(
@@ -611,7 +626,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               width: 6,
               height: 6,
               decoration: const BoxDecoration(
-                color: Color(0xFF10B981), // Online green dot
+                color: Color(0xFF10B981),
                 shape: BoxShape.circle,
               ),
             ),
@@ -686,7 +701,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Hover Generator Mechanism Widget
   Widget _buildHoverableWidget({
     required String id,
     required Widget Function(bool isHovered) builder,

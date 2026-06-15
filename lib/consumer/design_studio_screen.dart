@@ -16,8 +16,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
   int _selectedSecondaryColorIndex = 1;
   String _selectedSleeveLength = 'Short';
   String _selectedNeckline = 'Round';
-  final String _selectedFit =
-      'Regular';
+  final String _selectedFit = 'Regular';
   String _selectedGarmentLength = 'Regular';
 
   final Color backgroundColor = const Color(0xFFF4F6F9);
@@ -46,140 +45,157 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isLargeScreen = MediaQuery.of(context).size.width > 950;
-
+    // LayoutBuilder ব্যবহার করা হয়েছে যাতে প্রতিবার রান বা রি-স্টার্টে নিখুঁত স্ক্রিন সাইজ পাওয়া যায়
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 1300),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- Header Top Row Panel ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Design Studio',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: primaryDarkColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Customize your garment design',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: subtitleColor,
-                            ),
-                          ),
-                        ],
-                      ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double screenWidth = constraints.maxWidth;
+            final bool isLargeScreen = screenWidth > 950;
+            final bool isMobile = screenWidth < 650;
 
-                      // --- Preview Design Button ---
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ThreeDPreviewScreen(),
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 1300),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // হেডার সেকশন: মোবাইলের জন্য Column এবং ওয়েবের জন্য Row অটো হ্যান্ডেল করবে
+                      isMobile
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeaderTitle(),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _buildPreviewButton(),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: _buildHeaderTitle()),
+                                const SizedBox(width: 16),
+                                _buildPreviewButton(),
+                              ],
                             ),
-                          );
-                        },
-                        icon: const Text(
-                          'Preview Design',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        label: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryDarkColor,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 18,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
+                      const SizedBox(height: 32),
+
+                      // মেইন কন্টেন্ট স্প্লিট
+                      isLargeScreen
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 6,
+                                  child: _buildCustomizerPanelCard(isMobile),
+                                ),
+                                const SizedBox(width: 32),
+                                Expanded(
+                                  flex: 4,
+                                  child: _buildLivePreviewCard(),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                _buildCustomizerPanelCard(isMobile),
+                                const SizedBox(height: 32),
+                                _buildLivePreviewCard(),
+                              ],
+                            ),
                     ],
                   ),
-                  const SizedBox(height: 32),
-
-                  // --- Main Split Content ---
-                  isLargeScreen
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 6,
-                              child: _buildCustomizerPanelCard(),
-                            ),
-                            const SizedBox(width: 32),
-                            Expanded(flex: 4, child: _buildLivePreviewCard()),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            _buildCustomizerPanelCard(),
-                            const SizedBox(height: 32),
-                            _buildLivePreviewCard(),
-                          ],
-                        ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildCustomizerPanelCard() {
+  Widget _buildHeaderTitle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Design Studio',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: primaryDarkColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Customize your garment design',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: subtitleColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewButton() {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ThreeDPreviewScreen()),
+        );
+      },
+      label: const Icon(Icons.arrow_forward, color: Colors.white, size: 16),
+      icon: const Text(
+        'Preview Design',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryDarkColor,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _buildCustomizerPanelCard(bool isMobile) {
     return Container(
       decoration: BoxDecoration(
         color: cardBgColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSegmentedTabBar(),
+          _buildSegmentedTabBar(isMobile),
           Padding(
-            padding: const EdgeInsets.all(28.0),
+            padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
             child: IndexedStack(
               index: _activeTabIndex,
               children: [
-                _buildFabricAndPatternTab(),
+                _buildFabricAndPatternTab(isMobile),
                 _buildColorsTab(),
-                _buildStyleAndFitTab(),
-                _buildDetailsTab(),
+                _buildStyleAndFitTab(isMobile),
+                _buildDetailsTab(isMobile),
               ],
             ),
           ),
@@ -188,7 +204,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  Widget _buildSegmentedTabBar() {
+  Widget _buildSegmentedTabBar(bool isMobile) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -197,22 +213,22 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
       ),
       child: Row(
         children: [
-          _buildTabItem(0, Icons.layers_outlined, 'Fabric & Pattern'),
-          _buildTabItem(1, Icons.palette_outlined, 'Colors'),
-          _buildTabItem(2, Icons.architecture_outlined, 'Style & Fit'),
-          _buildTabItem(3, Icons.info_outline, 'Details'),
+          _buildTabItem(0, Icons.layers_outlined, 'Fabric', isMobile),
+          _buildTabItem(1, Icons.palette_outlined, 'Colors', isMobile),
+          _buildTabItem(2, Icons.architecture_outlined, 'Style', isMobile),
+          _buildTabItem(3, Icons.info_outline, 'Details', isMobile),
         ],
       ),
     );
   }
 
-  Widget _buildTabItem(int index, IconData icon, String label) {
+  Widget _buildTabItem(int index, IconData icon, String label, bool isMobile) {
     final bool isActive = _activeTabIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _activeTabIndex = index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: EdgeInsets.symmetric(vertical: isMobile ? 14 : 20),
           decoration: BoxDecoration(
             color: isActive ? primaryDarkColor : Colors.transparent,
             borderRadius: index == 0
@@ -227,23 +243,19 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
               Icon(
                 icon,
                 color: isActive ? Colors.white : subtitleColor,
-                size: 20,
+                size: 18,
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
+              if (!isMobile) ...[
+                const SizedBox(width: 8),
+                Text(
                   label,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: isActive ? Colors.white : subtitleColor,
-                    fontWeight: isActive
-                        ? FontWeight.w600
-                        : FontWeight
-                              .normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                     fontSize: 14,
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -251,34 +263,117 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  Widget _buildFabricAndPatternTab() {
-    final List<String> fabrics = [
-      'Cotton',
-      'Silk',
-      'Linen',
-      'Wool',
-      'Polyester',
-    ];
-    final List<String> patterns = ['Solid', 'Stripes', 'Polka Dots', 'Floral'];
+  Widget _buildVariantSelectionSection(
+    String title,
+    List<String> options,
+    String currentSelection,
+    Function(String) onSelected,
+    bool isMobile,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Select Fabric'),
-        const SizedBox(height: 16),
-        _buildResponsiveButtonCloud(
-          fabrics,
-          _selectedFabric,
-          (val) => setState(() => _selectedFabric = val),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: primaryDarkColor,
+          ),
         ),
-        const SizedBox(height: 32),
-        _buildSectionHeader('Pattern'),
         const SizedBox(height: 16),
-        _buildResponsiveButtonCloud(
-          patterns,
-          _selectedPattern,
-          (val) => setState(() => _selectedPattern = val),
+        Wrap(
+          spacing: isMobile ? 8 : 12,
+          runSpacing: isMobile ? 8 : 12,
+          children: options.map((item) {
+            final bool isSelected = item == currentSelection;
+            return InkWell(
+              onTap: () => onSelected(item),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 16 : 24,
+                  vertical: isMobile ? 12 : 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? primaryDarkColor
+                        : unselectedBorderColor,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    color: primaryDarkColor,
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.w700
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildFabricAndPatternTab(bool isMobile) {
+    return Column(
+      children: [
+        _buildVariantSelectionSection(
+          'Select Fabric',
+          ['Cotton', 'Silk', 'Linen', 'Wool', 'Polyester'],
+          _selectedFabric,
+          (val) => setState(() => _selectedFabric = val),
+          isMobile,
+        ),
+        const SizedBox(height: 32),
+        _buildVariantSelectionSection(
+          'Pattern',
+          ['Solid', 'Stripes', 'Polka Dots', 'Floral'],
+          _selectedPattern,
+          (val) => setState(() => _selectedPattern = val),
+          isMobile,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStyleAndFitTab(bool isMobile) {
+    return Column(
+      children: [
+        _buildVariantSelectionSection(
+          'Sleeve Length',
+          ['Sleeveless', 'Short', 'Long'],
+          _selectedSleeveLength,
+          (val) => setState(() => _selectedSleeveLength = val),
+          isMobile,
+        ),
+        const SizedBox(height: 32),
+        _buildVariantSelectionSection(
+          'Neckline Style',
+          ['Round', 'V Neck', 'Collar'],
+          _selectedNeckline,
+          (val) => setState(() => _selectedNeckline = val),
+          isMobile,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsTab(bool isMobile) {
+    return _buildVariantSelectionSection(
+      'Garment Length',
+      ['Crop', 'Regular', 'Long'],
+      _selectedGarmentLength,
+      (val) => setState(() => _selectedGarmentLength = val),
+      isMobile,
     );
   }
 
@@ -286,16 +381,30 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Primary Color'),
+        Text(
+          'Primary Color',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: primaryDarkColor,
+          ),
+        ),
         const SizedBox(height: 16),
-        _buildColorSelectionGrid(
+        _buildColorGrid(
           _selectedPrimaryColorIndex,
           (idx) => setState(() => _selectedPrimaryColorIndex = idx),
         ),
         const SizedBox(height: 32),
-        _buildSectionHeader('Secondary Color (Accents)'),
+        Text(
+          'Secondary Color (Accents)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: primaryDarkColor,
+          ),
+        ),
         const SizedBox(height: 16),
-        _buildColorSelectionGrid(
+        _buildColorGrid(
           _selectedSecondaryColorIndex,
           (idx) => setState(() => _selectedSecondaryColorIndex = idx),
         ),
@@ -303,115 +412,19 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  Widget _buildStyleAndFitTab() {
-    final List<String> sleeves = ['Sleeveless', 'Short', 'Long'];
-    final List<String> necklines = ['Round', 'V Neck', 'Collar'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Sleeve Length'),
-        const SizedBox(height: 16),
-        _buildResponsiveButtonCloud(
-          sleeves,
-          _selectedSleeveLength,
-          (val) => setState(() => _selectedSleeveLength = val),
-        ),
-        const SizedBox(height: 32),
-        _buildSectionHeader('Neckline Style'),
-        const SizedBox(height: 16),
-        _buildResponsiveButtonCloud(
-          necklines,
-          _selectedNeckline,
-          (val) => setState(() => _selectedNeckline = val),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsTab() {
-    final List<String> lengths = ['Crop', 'Regular', 'Long'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Garment Length'),
-        const SizedBox(height: 16),
-        _buildResponsiveButtonCloud(
-          lengths,
-          _selectedGarmentLength,
-          (val) => setState(() => _selectedGarmentLength = val),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: primaryDarkColor,
-      ),
-    );
-  }
-
-  Widget _buildResponsiveButtonCloud(
-    List<String> variants,
-    String currentSelection,
-    Function(String) onSelected,
-  ) {
+  Widget _buildColorGrid(int selectedIndex, Function(int) onColorSelected) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: variants.map((item) {
-        final bool isSelected = item == currentSelection;
-        return InkWell(
-          onTap: () => onSelected(item),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? primaryDarkColor : unselectedBorderColor,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Text(
-              item,
-              style: TextStyle(
-                color: primaryDarkColor,
-                fontSize: 14,
-                fontWeight: isSelected
-                    ? FontWeight.w700
-                    : FontWeight
-                          .normal,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildColorSelectionGrid(
-    int selectedIndex,
-    Function(int) onColorSelected,
-  ) {
-    return Wrap(
-      spacing: 14,
-      runSpacing: 14,
       children: List.generate(_colorSwatches.length, (index) {
-        final Color swatchColor = _colorSwatches[index];
         final bool isSelected = selectedIndex == index;
         return GestureDetector(
           onTap: () => onColorSelected(index),
           child: Container(
-            height: 52,
-            width: 52,
+            height: 48,
+            width: 48,
             decoration: BoxDecoration(
-              color: swatchColor,
+              color: _colorSwatches[index],
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? primaryDarkColor : Colors.transparent,
@@ -420,7 +433,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
             ),
             child: isSelected
                 ? const Icon(Icons.check, color: Colors.white, size: 18)
-                : const SizedBox.shrink(),
+                : null,
           ),
         );
       }),
@@ -435,7 +448,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -454,7 +467,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
           ),
           const SizedBox(height: 20),
           Container(
-            height: 300,
+            height: 260,
             width: double.infinity,
             decoration: BoxDecoration(
               color: const Color(0xFF161624),
@@ -463,34 +476,31 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
           ),
           const SizedBox(height: 24),
           _buildMetadataRow('Fabric:', _selectedFabric),
-          const SizedBox(height: 12),
           _buildMetadataRow('Pattern:', _selectedPattern),
-          const SizedBox(height: 12),
           _buildMetadataRow('Fit:', _selectedFit),
-          const SizedBox(height: 12),
           _buildMetadataRow('Neckline:', _selectedNeckline),
         ],
       ),
     );
   }
 
-  Widget _buildMetadataRow(String propertyLabel, String dynamicValue) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          propertyLabel,
-          style: TextStyle(color: subtitleColor, fontSize: 14),
-        ),
-        Text(
-          dynamicValue,
-          style: TextStyle(
-            color: primaryDarkColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+  Widget _buildMetadataRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: subtitleColor, fontSize: 14)),
+          Text(
+            value,
+            style: TextStyle(
+              color: primaryDarkColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

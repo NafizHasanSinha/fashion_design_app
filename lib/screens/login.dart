@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../consumer/ai_scanning_screen.dart';
-import '../Industrial_Client/design_studio.dart';
-import '../admin/admin_dashboard.dart';
+import 'consumer_login.dart';
+import 'industrial_login.dart';
+import 'administrator_login.dart';
 
 class LoginSelectionScreen extends StatefulWidget {
   const LoginSelectionScreen({super.key});
@@ -11,18 +11,14 @@ class LoginSelectionScreen extends StatefulWidget {
 }
 
 class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
-  // Active selected role state
   String? selectedRole = 'Consumer';
 
-  // Design theme color palette
   final Color bgColor = const Color(0xFFF4F6F9);
   final Color textColor = const Color(0xFF2D3748);
   final Color subTextColor = const Color(0xFF718096);
-  final Color buttonColor = const Color(0xFF111827);
 
   @override
   Widget build(BuildContext context) {
-    // Determine layout mode based on screen width (Web/Tablet vs Mobile)
     final bool isLargeScreen = MediaQuery.of(context).size.width > 768;
 
     return Scaffold(
@@ -35,13 +31,11 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
               vertical: 40.0,
             ),
             child: Container(
-              // Limit layout width on web to keep the design elegant
               constraints: BoxConstraints(maxWidth: isLargeScreen ? 1000 : 450),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // --- Header Section ---
                   Text(
                     'Fashion Design\nStudio',
                     textAlign: TextAlign.center,
@@ -63,11 +57,7 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // --- Adaptive Dynamic Content Layout ---
-                  isLargeScreen
-                      ? _buildWebLayout() // Side-by-side view for Web / Desktop
-                      : _buildMobileLayout(), // Stacked view for Mobile devices
+                  isLargeScreen ? _buildWebLayout() : _buildMobileLayout(),
                 ],
               ),
             ),
@@ -77,32 +67,27 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
     );
   }
 
-  // Layout optimized for mobile devices (Vertical stack)
   Widget _buildMobileLayout() {
     return Column(
       children: [
         _buildRoleSelection(isLargeScreen: false),
         const SizedBox(height: 32),
-        _buildLoginForm(),
+        _buildDynamicLoginForm(),
       ],
     );
   }
 
-  // Layout optimized for larger web/desktop screens (Side-by-side splits)
   Widget _buildWebLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Role cards taking left side space
         Expanded(flex: 5, child: _buildRoleSelection(isLargeScreen: true)),
         const SizedBox(width: 48),
-        // Login form taking right side space
-        Expanded(flex: 4, child: _buildLoginForm()),
+        Expanded(flex: 4, child: _buildDynamicLoginForm()),
       ],
     );
   }
 
-  // Widget builder for Role Selection Section
   Widget _buildRoleSelection({required bool isLargeScreen}) {
     final List<Widget> cards = [
       RoleCard(
@@ -131,7 +116,6 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
       ),
     ];
 
-    // Web uses a row for cards, while mobile stacks them vertically
     if (isLargeScreen) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,8 +144,27 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
     }
   }
 
-  // Widget builder for credentials input form
-  Widget _buildLoginForm() {
+  // সিলেক্টেড রোল অনুযায়ী সঠিক লগইন ফর্ম কল করার ডায়নামিক মেথড
+  Widget _buildDynamicLoginForm() {
+    Widget activeForm;
+
+    if (selectedRole == 'Industrial Client') {
+      activeForm = IndustrialLoginForm(
+        textColor: textColor,
+        subTextColor: subTextColor,
+      );
+    } else if (selectedRole == 'Administrator') {
+      activeForm = AdministratorLoginForm(
+        textColor: textColor,
+        subTextColor: subTextColor,
+      );
+    } else {
+      activeForm = ConsumerLoginForm(
+        textColor: textColor,
+        subTextColor: subTextColor,
+      );
+    }
+
     return Container(
       constraints: const BoxConstraints(maxWidth: 420),
       padding: const EdgeInsets.all(28),
@@ -176,115 +179,17 @@ class _LoginSelectionScreenState extends State<LoginSelectionScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Email Address',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            decoration: InputDecoration(
-              hintText: 'your@email.com',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              prefixIcon: Icon(Icons.mail_outline, color: subTextColor),
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: textColor),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Password',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            obscureText: true,
-            decoration: InputDecoration(
-              hintText: '••••••••',
-              hintStyle: TextStyle(
-                color: Colors.grey.shade400,
-                letterSpacing: 2,
-              ),
-              prefixIcon: Icon(Icons.lock_outline, color: subTextColor),
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: textColor),
-              ),
-            ),
-          ),
-          const SizedBox(height: 28),
-          HoverButton(
-            text: 'Continue as ${selectedRole?.split(" ").first ?? ""}',
-            onTap: () {
-              // --- আপডেট করা নেভিগেশন লজিক ---
-              if (selectedRole == 'Consumer') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AiScanningScreen(),
-                  ),
-                );
-              } else if (selectedRole == 'Industrial Client') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProductionDesignSystemScreen(),
-                  ),
-                );
-              } else if (selectedRole == 'Administrator') {
-                // এখানে অ্যাডমিন ড্যাশবোর্ডে নেভিগেট করবে
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminDashboardScreen(),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Logging in as $selectedRole...')),
-                );
-              }
-            },
-          ),
-        ],
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: KeyedSubtree(
+          key: ValueKey<String>(selectedRole ?? 'Consumer'),
+          child: activeForm,
+        ),
       ),
     );
   }
 }
 
-// =========================================================================
-// Custom Widget: Role Cards featuring dynamic Hover & Selection Effects
-// =========================================================================
 class RoleCard extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -384,69 +289,6 @@ class _RoleCardState extends State<RoleCard> {
                   height: 1.3,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =========================================================================
-// Custom Widget: Action Button optimized with modern micro-interactions
-// =========================================================================
-class HoverButton extends StatefulWidget {
-  final String text;
-  final VoidCallback onTap;
-
-  const HoverButton({super.key, required this.text, required this.onTap});
-
-  @override
-  State<HoverButton> createState() => _HoverButtonState();
-}
-
-class _HoverButtonState extends State<HoverButton> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          height: 55,
-          decoration: BoxDecoration(
-            color: isHovered
-                ? const Color(0xFF1F2937)
-                : const Color(0xFF111827),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              if (isHovered)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
-                ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                widget.text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
             ],
           ),
         ),

@@ -9,6 +9,9 @@ class PreviewDialogs {
 
   // --- 1. Custom Export Dialog ---
   static void showExport(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 600;
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -21,7 +24,12 @@ class PreviewDialogs {
           backgroundColor: Colors.white,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 480),
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile
+                  ? 20
+                  : 32, // মোবাইলে প্যাডিং অ্যাডাপ্টিভ করা হয়েছে
+              vertical: 36,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,15 +164,20 @@ class PreviewDialogs {
     showDialog(
       context: context,
       builder: (context) {
+        final double screenWidth = MediaQuery.of(context).size.width;
+        final double screenHeight = MediaQuery.of(context).size.height;
+        final bool isMobile = screenWidth < 650;
+
         return DefaultTabController(
           length: 2,
           child: Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
+            // ১ নম্বর ফিক্স: মোবাইলের জন্য উইডথ এবং হাইট রেসপন্সিভ করা হয়েছে
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.75,
-              height: MediaQuery.of(context).size.height * 0.85,
+              width: isMobile ? screenWidth * 0.95 : screenWidth * 0.75,
+              height: isMobile ? screenHeight * 0.90 : screenHeight * 0.85,
               constraints: const BoxConstraints(maxWidth: 900, maxHeight: 650),
               child: Column(
                 children: [
@@ -173,26 +186,28 @@ class PreviewDialogs {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Edit Design',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: primaryDarkColor,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Edit Design',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryDarkColor,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Adjust any element of your design',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: subtitleColor,
+                              const SizedBox(height: 4),
+                              Text(
+                                'Adjust any element of your design',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: subtitleColor,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -221,8 +236,8 @@ class PreviewDialogs {
                   Expanded(
                     child: TabBarView(
                       children: [
-                        _buildEditDesignOptionsTab(),
-                        _buildEditMeasurementsTab(),
+                        _buildEditDesignOptionsTab(isMobile),
+                        _buildEditMeasurementsTab(isMobile),
                       ],
                     ),
                   ),
@@ -257,7 +272,7 @@ class PreviewDialogs {
                             size: 18,
                           ),
                           label: const Text(
-                            'Save Changes',
+                            'Save',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -266,8 +281,8 @@ class PreviewDialogs {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryDarkColor,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
+                              horizontal: 16,
+                              vertical: 14,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -286,7 +301,8 @@ class PreviewDialogs {
     );
   }
 
-  static Widget _buildEditDesignOptionsTab() {
+  // ২ নম্বর ফিক্স: মোবাইলে ইনপুট ফিল্ডগুলো কলাম আকারে নিচে নিচে সাজানো হবে
+  static Widget _buildEditDesignOptionsTab(bool isMobile) {
     final List<Color> colors = [
       const Color(0xFF1A1A2E),
       const Color(0xFF16213E),
@@ -314,28 +330,44 @@ class PreviewDialogs {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdownField('Fabric', 'Cotton', [
-                'Cotton',
-                'Silk',
-                'Linen',
-                'Wool',
-                'Polyester',
-              ]),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdownField('Pattern', 'Stripes', [
-                'Solid',
-                'Stripes',
-                'Polka Dots',
-                'Floral',
-              ]),
-            ),
-          ],
-        ),
+        if (isMobile) ...[
+          _buildDropdownField('Fabric', 'Cotton', [
+            'Cotton',
+            'Silk',
+            'Linen',
+            'Wool',
+            'Polyester',
+          ]),
+          const SizedBox(height: 16),
+          _buildDropdownField('Pattern', 'Stripes', [
+            'Solid',
+            'Stripes',
+            'Polka Dots',
+            'Floral',
+          ]),
+        ] else
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdownField('Fabric', 'Cotton', [
+                  'Cotton',
+                  'Silk',
+                  'Linen',
+                  'Wool',
+                  'Polyester',
+                ]),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDropdownField('Pattern', 'Stripes', [
+                  'Solid',
+                  'Stripes',
+                  'Polka Dots',
+                  'Floral',
+                ]),
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
         Text(
           'Colors',
@@ -359,50 +391,73 @@ class PreviewDialogs {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdownField('Sleeve Length', 'Short', [
-                'Short',
-                'Long',
-                'Three-Quarter',
-              ]),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdownField('Neckline', 'Round', [
-                'Round',
-                'V-Neck',
-                'Collar',
-              ]),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdownField('Fit', 'Regular', [
-                'Regular',
-                'Slim Fit',
-                'Oversized',
-              ]),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdownField('Length', 'Regular', [
-                'Regular',
-                'Long',
-                'Crop',
-              ]),
-            ),
-          ],
-        ),
+        if (isMobile) ...[
+          _buildDropdownField('Sleeve Length', 'Short', [
+            'Short',
+            'Long',
+            'Three-Quarter',
+          ]),
+          const SizedBox(height: 16),
+          _buildDropdownField('Neckline', 'Round', [
+            'Round',
+            'V-Neck',
+            'Collar',
+          ]),
+          const SizedBox(height: 16),
+          _buildDropdownField('Fit', 'Regular', [
+            'Regular',
+            'Slim Fit',
+            'Oversized',
+          ]),
+          const SizedBox(height: 16),
+          _buildDropdownField('Length', 'Regular', ['Regular', 'Long', 'Crop']),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdownField('Sleeve Length', 'Short', [
+                  'Short',
+                  'Long',
+                  'Three-Quarter',
+                ]),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDropdownField('Neckline', 'Round', [
+                  'Round',
+                  'V-Neck',
+                  'Collar',
+                ]),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdownField('Fit', 'Regular', [
+                  'Regular',
+                  'Slim Fit',
+                  'Oversized',
+                ]),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDropdownField('Length', 'Regular', [
+                  'Regular',
+                  'Long',
+                  'Crop',
+                ]),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  static Widget _buildEditMeasurementsTab() {
+  // ৩ নম্বর ফিক্স: মেজারমেন্ট স্লাইডার মোবাইলে নিচে নিচে আসবে
+  static Widget _buildEditMeasurementsTab(bool isMobile) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -418,21 +473,31 @@ class PreviewDialogs {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(child: _buildSliderInputField('Shoulders', 40, 30, 50)),
-            const SizedBox(width: 24),
-            Expanded(child: _buildSliderInputField('Chest', 43, 35, 55)),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(child: _buildSliderInputField('Waist', 31, 25, 45)),
-            const SizedBox(width: 24),
-            Expanded(child: _buildSliderInputField('Hips', 43, 35, 55)),
-          ],
-        ),
+        if (isMobile) ...[
+          _buildSliderInputField('Shoulders', 40, 30, 50),
+          const SizedBox(height: 20),
+          _buildSliderInputField('Chest', 43, 35, 55),
+          const SizedBox(height: 20),
+          _buildSliderInputField('Waist', 31, 25, 45),
+          const SizedBox(height: 20),
+          _buildSliderInputField('Hips', 43, 35, 55),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(child: _buildSliderInputField('Shoulders', 40, 30, 50)),
+              const SizedBox(width: 24),
+              Expanded(child: _buildSliderInputField('Chest', 43, 35, 55)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: _buildSliderInputField('Waist', 31, 25, 45)),
+              const SizedBox(width: 24),
+              Expanded(child: _buildSliderInputField('Hips', 43, 35, 55)),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -442,13 +507,17 @@ class PreviewDialogs {
     showDialog(
       context: context,
       builder: (context) {
+        final double screenWidth = MediaQuery.of(context).size.width;
+        final double screenHeight = MediaQuery.of(context).size.height;
+        final bool isMobile = screenWidth < 650;
+
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.85,
-            height: MediaQuery.of(context).size.height * 0.85,
+            width: isMobile ? screenWidth * 0.95 : screenWidth * 0.85,
+            height: isMobile ? screenHeight * 0.90 : screenHeight * 0.85,
             constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 680),
             child: Column(
               children: [
@@ -457,26 +526,30 @@ class PreviewDialogs {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Industrial Features',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: primaryDarkColor,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Industrial Features',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: primaryDarkColor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Professional-grade pattern making and production controls',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: subtitleColor,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Professional-grade pattern making controls',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: subtitleColor,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
@@ -520,7 +593,7 @@ class PreviewDialogs {
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Precise measurements ensure industrial-grade pattern accuracy. All measurements are in inches and will be used for automated pattern generation and grading.',
+                                'Precise measurements ensure industrial-grade pattern accuracy.',
                                 style: TextStyle(
                                   color: Color(0xFF1E40AF),
                                   fontSize: 13,
@@ -531,66 +604,86 @@ class PreviewDialogs {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIndustrialSliderRow(
-                              'Bust',
-                              36,
-                              30,
-                              50,
+                      // ৪ নম্বর ফিক্স: মেইন কন্টেন্টের স্লাইডার রো-গুলোকে মোবাইলের জন্য কলামে রূপান্তর
+                      if (isMobile) ...[
+                        _buildIndustrialSliderRow('Bust', 36, 30, 50),
+                        const SizedBox(height: 16),
+                        _buildIndustrialSliderRow('Waist', 28, 20, 45),
+                        const SizedBox(height: 16),
+                        _buildIndustrialSliderRow('Hip', 38, 30, 50),
+                        const SizedBox(height: 16),
+                        _buildIndustrialSliderRow('Sleeve Length', 24, 15, 35),
+                        const SizedBox(height: 16),
+                        _buildIndustrialSliderRow('Height', 66, 50, 80),
+                        const SizedBox(height: 16),
+                        _buildIndustrialSliderRow('Shoulder Width', 15, 10, 25),
+                      ] else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Bust',
+                                36,
+                                30,
+                                50,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: _buildIndustrialSliderRow(
-                              'Waist',
-                              28,
-                              20,
-                              45,
+                            const SizedBox(width: 32),
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Waist',
+                                28,
+                                20,
+                                45,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIndustrialSliderRow('Hip', 38, 30, 50),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: _buildIndustrialSliderRow(
-                              'Sleeve Length',
-                              24,
-                              15,
-                              35,
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Hip',
+                                38,
+                                30,
+                                50,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIndustrialSliderRow(
-                              'Height',
-                              66,
-                              50,
-                              80,
+                            const SizedBox(width: 32),
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Sleeve Length',
+                                24,
+                                15,
+                                35,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: _buildIndustrialSliderRow(
-                              'Shoulder Width',
-                              15,
-                              10,
-                              25,
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Height',
+                                66,
+                                50,
+                                80,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 32),
+                            Expanded(
+                              child: _buildIndustrialSliderRow(
+                                'Shoulder Width',
+                                15,
+                                10,
+                                25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -610,8 +703,10 @@ class PreviewDialogs {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            // ৫ নম্বর ফিক্স: মোবাইলের সংকীর্ণ জায়গায় ওভারফ্লো এড়াতে Row এর বদলে Wrap ব্যবহার
+                            Wrap(
+                              spacing: 16,
+                              runSpacing: 12,
                               children: [
                                 _buildSummaryText('Body Type:', 'Balanced'),
                                 _buildSummaryText('Fit Category:', 'Petite'),
@@ -628,40 +723,81 @@ class PreviewDialogs {
                     ],
                   ),
                 ),
+                // ৬ নম্বর ফিক্স: বটম বারটিকে রেসপন্সিভ করা হয়েছে যাতে লেখা কেটে না যায়
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 16,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'All industrial settings are automatically included in your export',
-                        style: TextStyle(color: subtitleColor, fontSize: 13),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryDarkColor,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                  child: isMobile
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'All industrial settings are automatically included in your export',
+                              style: TextStyle(
+                                color: subtitleColor,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryDarkColor,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'Done',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'All industrial settings are automatically included in your export',
+                                style: TextStyle(
+                                  color: subtitleColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryDarkColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'Done',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Done',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -869,18 +1005,18 @@ class PreviewDialogs {
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${value.toInt()} inches',
-              style: TextStyle(color: subtitleColor, fontSize: 12),
+              '${value.toInt()} in',
+              style: TextStyle(color: subtitleColor, fontSize: 11),
             ),
             const SizedBox(height: 4),
             Container(
-              width: 50,
-              padding: const EdgeInsets.all(8),
+              width: 44,
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 border: Border.all(color: outlineBorderColor),
                 borderRadius: BorderRadius.circular(6),
@@ -888,7 +1024,7 @@ class PreviewDialogs {
               child: Text(
                 '${value.toInt()}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 12),
               ),
             ),
           ],

@@ -43,7 +43,6 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
   late TextEditingController waistCtrl;
   late TextEditingController hipsCtrl;
 
-  // Color Palette Grid data from screenshots
   final List<Color> colorPalette = [
     const Color(0xFF1A1A2E),
     const Color(0xFF16213E),
@@ -106,11 +105,14 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 650;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       backgroundColor: Colors.white,
       child: Container(
-        width: 750,
+        width: isMobile ? screenWidth * 0.95 : 750,
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
@@ -121,13 +123,13 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
             _buildCustomTabs(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(isMobile ? 16 : 24),
                 child: activeTab == 'Design Options'
-                    ? _buildDesignOptionsTab()
-                    : _buildMeasurementsTab(),
+                    ? _buildDesignOptionsTab(isMobile)
+                    : _buildMeasurementsTab(isMobile),
               ),
             ),
-            _buildPopupFooter(),
+            _buildPopupFooter(isMobile),
           ],
         ),
       ),
@@ -140,23 +142,25 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Edit Design',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Design',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Adjust any element of your design',
-                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-              ),
-            ],
+                SizedBox(height: 4),
+                Text(
+                  'Adjust any element of your design',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.close, color: Colors.black),
@@ -210,7 +214,109 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
     );
   }
 
-  Widget _buildDesignOptionsTab() {
+  Widget _buildDesignOptionsTab(bool isMobile) {
+    final fabricPatternRow = Row(
+      children: [
+        Expanded(
+          child: _buildDropdown('Fabric', selectedFabric, fabrics, (v) {
+            setState(() => selectedFabric = v!);
+          }),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildDropdown('Pattern', selectedPattern, patterns, (v) {
+            setState(() => selectedPattern = v!);
+          }),
+        ),
+      ],
+    );
+
+    final fabricPatternColumn = Column(
+      children: [
+        _buildDropdown('Fabric', selectedFabric, fabrics, (v) {
+          setState(() => selectedFabric = v!);
+        }),
+        const SizedBox(height: 16),
+        _buildDropdown('Pattern', selectedPattern, patterns, (v) {
+          setState(() => selectedPattern = v!);
+        }),
+      ],
+    );
+
+    final styleRow1 = Row(
+      children: [
+        Expanded(
+          child: _buildDropdown(
+            'Sleeve Length',
+            selectedSleeveLength,
+            ['Short', 'Long', 'Sleeveless'],
+            (v) => setState(() => selectedSleeveLength = v!),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildDropdown('Neckline', selectedNeckline, [
+            'Round',
+            'V-Neck',
+            'Collar',
+          ], (v) => setState(() => selectedNeckline = v!)),
+        ),
+      ],
+    );
+
+    final styleColumn1 = Column(
+      children: [
+        _buildDropdown(
+          'Sleeve Length',
+          selectedSleeveLength,
+          ['Short', 'Long', 'Sleeveless'],
+          (v) => setState(() => selectedSleeveLength = v!),
+        ),
+        const SizedBox(height: 16),
+        _buildDropdown('Neckline', selectedNeckline, [
+          'Round',
+          'V-Neck',
+          'Collar',
+        ], (v) => setState(() => selectedNeckline = v!)),
+      ],
+    );
+
+    final styleRow2 = Row(
+      children: [
+        Expanded(
+          child: _buildDropdown('Fit', selectedFit, [
+            'Regular',
+            'Slim',
+            'Oversized',
+          ], (v) => setState(() => selectedFit = v!)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildDropdown('Length', selectedLength, [
+            'Regular',
+            'Long',
+            'Cropped',
+          ], (v) => setState(() => selectedLength = v!)),
+        ),
+      ],
+    );
+
+    final styleColumn2 = Column(
+      children: [
+        _buildDropdown('Fit', selectedFit, [
+          'Regular',
+          'Slim',
+          'Oversized',
+        ], (v) => setState(() => selectedFit = v!)),
+        const SizedBox(height: 16),
+        _buildDropdown('Length', selectedLength, [
+          'Regular',
+          'Long',
+          'Cropped',
+        ], (v) => setState(() => selectedLength = v!)),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,21 +325,7 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown('Fabric', selectedFabric, fabrics, (v) {
-                setState(() => selectedFabric = v!);
-              }),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdown('Pattern', selectedPattern, patterns, (v) {
-                setState(() => selectedPattern = v!);
-              }),
-            ),
-          ],
-        ),
+        isMobile ? fabricPatternColumn : fabricPatternRow,
         const SizedBox(height: 24),
         const Text(
           'Colors',
@@ -262,52 +354,14 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown(
-                'Sleeve Length',
-                selectedSleeveLength,
-                ['Short', 'Long', 'Sleeveless'],
-                (v) => setState(() => selectedSleeveLength = v!),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdown(
-                'Neckline',
-                selectedNeckline,
-                ['Round', 'V-Neck', 'Collar'],
-                (v) => setState(() => selectedNeckline = v!),
-              ),
-            ),
-          ],
-        ),
+        isMobile ? styleColumn1 : styleRow1,
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown('Fit', selectedFit, [
-                'Regular',
-                'Slim',
-                'Oversized',
-              ], (v) => setState(() => selectedFit = v!)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildDropdown('Length', selectedLength, [
-                'Regular',
-                'Long',
-                'Cropped',
-              ], (v) => setState(() => selectedLength = v!)),
-            ),
-          ],
-        ),
+        isMobile ? styleColumn2 : styleRow2,
       ],
     );
   }
 
-  Widget _buildMeasurementsTab() {
+  Widget _buildMeasurementsTab(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,10 +380,10 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
         ),
         const SizedBox(height: 24),
         GridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: isMobile ? 1 : 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 2.5,
+          childAspectRatio: isMobile ? 3.0 : 2.5,
           mainAxisSpacing: 20,
           crossAxisSpacing: 24,
           children: [
@@ -385,7 +439,8 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: value,
+          // ফিক্স ৩: 'value' এর পরিবর্তে 'initialValue' ব্যবহার করা হয়েছে
+          initialValue: value,
           isExpanded: true,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(
@@ -419,8 +474,8 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
         return GestureDetector(
           onTap: () => onSelected(color),
           child: Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(6),
@@ -452,12 +507,12 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
           label,
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Row(
           children: [
             Expanded(
               child: SizedBox(
-                height: 40,
+                height: 35,
                 child: TextField(
                   controller: ctrl,
                   readOnly: true,
@@ -477,19 +532,21 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
             ),
           ],
         ),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          activeColor: const Color(0xFF0066FF),
-          inactiveColor: const Color(0xFFE2E8F0),
-          onChanged: onSliderChanged,
+        Expanded(
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            activeColor: const Color(0xFF0066FF),
+            inactiveColor: const Color(0xFFE2E8F0),
+            onChanged: onSliderChanged,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildPopupFooter() {
+  Widget _buildPopupFooter(bool isMobile) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -505,11 +562,14 @@ class _EditDesignDialogState extends State<EditDesignDialog> {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isMobile ? 8 : 16),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0F172A),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 12 : 20,
+                vertical: 14,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -552,7 +612,7 @@ class IndustrialFeaturesDialog extends StatefulWidget {
 class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
   String activeTab = 'Precise Measurements';
 
-  // State Management for Tab 1: Precise Measurements
+  // Measurements States
   double bust = 36;
   double waist = 28;
   double hip = 38;
@@ -565,7 +625,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
   double wristCircumference = 6;
   double thighCircumference = 22;
 
-  // State Management for Tab 2: Fabric Specs
+  // Fabric Specs States
   double fabricWeight = 180;
   String selectedTexture = 'Smooth';
   String selectedDurability = 'Medium (Standard)';
@@ -585,7 +645,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     text: 'Machine wash cold, tumble dry low',
   );
 
-  // State Management for Tab 5: Bulk Production
+  // Bulk Production States
   final TextEditingController orderIdController = TextEditingController(
     text: 'ORD-1781033591485',
   );
@@ -611,7 +671,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     'XL': TextEditingController(text: '10'),
   };
 
-  // State Management for Tab 6: Supply Chain
+  // Supply Chain States
   final TextEditingController supplierNameController = TextEditingController();
   final TextEditingController supplierLocationController =
       TextEditingController();
@@ -661,12 +721,18 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 650;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 40,
+        vertical: 30,
+      ),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
+        width: screenWidth * 0.90,
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
@@ -681,10 +747,12 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
             const SizedBox(height: 20),
             Expanded(
-              child: SingleChildScrollView(child: _buildActiveTabContent()),
+              child: SingleChildScrollView(
+                child: _buildActiveTabContent(isMobile),
+              ),
             ),
             const SizedBox(height: 16),
-            _buildFooter(),
+            _buildFooter(isMobile),
           ],
         ),
       ),
@@ -695,23 +763,25 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Industrial Features',
-              style: TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Industrial Features',
+                style: TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Professional-grade pattern making and production controls',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
-            ),
-          ],
+              SizedBox(height: 4),
+              Text(
+                'Professional-grade pattern making controls',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              ),
+            ],
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
@@ -760,26 +830,26 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     );
   }
 
-  Widget _buildActiveTabContent() {
+  Widget _buildActiveTabContent(bool isMobile) {
     switch (activeTab) {
       case 'Precise Measurements':
-        return _buildPreciseMeasurements();
+        return _buildPreciseMeasurements(isMobile);
       case 'Fabric Specs':
-        return _buildFabricSpecs();
+        return _buildFabricSpecs(isMobile);
       case 'Pattern Modules':
-        return _buildPatternModules();
+        return _buildPatternModules(isMobile);
       case '3D Mapping':
         return _build3DMapping();
       case 'Bulk Production':
-        return _buildBulkProduction();
+        return _buildBulkProduction(isMobile);
       case 'Supply Chain':
-        return _buildSupplyChain();
+        return _buildSupplyChain(isMobile);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildPreciseMeasurements() {
+  Widget _buildPreciseMeasurements(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -796,7 +866,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Precise measurements ensure industrial-grade pattern accuracy. All measurements are in inches and will be used for automated pattern generation and grading.',
+                  'Measurements are in inches and will be used for automated pattern generation.',
                   style: TextStyle(color: Color(0xFF1E40AF), fontSize: 13),
                 ),
               ),
@@ -805,10 +875,10 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
         ),
         const SizedBox(height: 24),
         GridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: isMobile ? 1 : 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 3.5,
+          childAspectRatio: isMobile ? 4.5 : 3.5,
           mainAxisSpacing: 16,
           crossAxisSpacing: 32,
           children: [
@@ -886,7 +956,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
           ],
         ),
         const SizedBox(height: 24),
-        _buildMeasurementSummaryCard(),
+        _buildMeasurementSummaryCard(isMobile),
       ],
     );
   }
@@ -923,7 +993,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
               ],
             ),
             Text(
-              '${value.round()} inches',
+              '${value.round()} in',
               style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
             ),
           ],
@@ -936,7 +1006,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
                   activeTrackColor: const Color(0xFF0066FF),
                   inactiveTrackColor: const Color(0xFFE2E8F0),
                   thumbColor: const Color(0xFF0066FF),
-                  trackHeight: 6,
+                  trackHeight: 4,
                 ),
                 child: Slider(
                   value: value,
@@ -947,8 +1017,8 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
               ),
             ),
             Container(
-              width: 50,
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+              width: 45,
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
               decoration: BoxDecoration(
                 border: Border.all(color: const Color(0xFFCBD5E1)),
                 borderRadius: BorderRadius.circular(6),
@@ -956,7 +1026,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
               alignment: Alignment.center,
               child: Text(
                 '${value.round()}',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF334155)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
               ),
             ),
           ],
@@ -965,7 +1035,28 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     );
   }
 
-  Widget _buildMeasurementSummaryCard() {
+  Widget _buildMeasurementSummaryCard(bool isMobile) {
+    final contentRow = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildSummaryItem('Body Type:', 'Balanced'),
+        _buildSummaryItem('Fit Category:', 'Petite'),
+        _buildSummaryItem('Height Category:', 'Regular'),
+        _buildSummaryItem('Arm Length:', 'Regular'),
+      ],
+    );
+
+    final contentWrap = Wrap(
+      spacing: 20,
+      runSpacing: 12,
+      children: [
+        _buildSummaryItem('Body Type:', 'Balanced'),
+        _buildSummaryItem('Fit Category:', 'Petite'),
+        _buildSummaryItem('Height Category:', 'Regular'),
+        _buildSummaryItem('Arm Length:', 'Regular'),
+      ],
+    );
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -986,15 +1077,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildSummaryItem('Body Type:', 'Balanced'),
-              _buildSummaryItem('Fit Category:', 'Petite'),
-              _buildSummaryItem('Height Category:', 'Regular'),
-              _buildSummaryItem('Arm Length:', 'Regular'),
-            ],
-          ),
+          isMobile ? contentWrap : contentRow,
         ],
       ),
     );
@@ -1021,181 +1104,298 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     );
   }
 
-  Widget _buildFabricSpecs() {
+  Widget _buildFabricSpecs(bool isMobile) {
+    final row1 = Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Fabric Weight (GSM)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  suffixText: 'g/m²',
+                ),
+                controller: fabricWeightController,
+              ),
+              Slider(
+                value: fabricWeight,
+                min: 100,
+                max: 400,
+                onChanged: (v) => setState(() {
+                  fabricWeight = v;
+                  fabricWeightController.text = '${v.round()}';
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _buildDropdownField('Texture', selectedTexture, [
+            'Smooth',
+            'Rough',
+            'Textured',
+          ], (v) => setState(() => selectedTexture = v!)),
+        ),
+      ],
+    );
+
+    final col1 = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Fabric Weight (GSM)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            suffixText: 'g/m²',
+          ),
+          controller: fabricWeightController,
+        ),
+        Slider(
+          value: fabricWeight,
+          min: 100,
+          max: 400,
+          onChanged: (v) => setState(() {
+            fabricWeight = v;
+            fabricWeightController.text = '${v.round()}';
+          }),
+        ),
+        const SizedBox(height: 16),
+        _buildDropdownField('Texture', selectedTexture, [
+          'Smooth',
+          'Rough',
+          'Textured',
+        ], (v) => setState(() => selectedTexture = v!)),
+      ],
+    );
+
+    final row2 = Row(
+      children: [
+        Expanded(
+          child: _buildDropdownField(
+            'Durability Grade',
+            selectedDurability,
+            ['Medium (Standard)', 'High', 'Premium'],
+            (v) => setState(() => selectedDurability = v!),
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _buildDropdownField(
+            'Breathability',
+            selectedBreathability,
+            ['High', 'Medium', 'Low'],
+            (v) => setState(() => selectedBreathability = v!),
+          ),
+        ),
+      ],
+    );
+
+    final col2 = Column(
+      children: [
+        _buildDropdownField(
+          'Durability Grade',
+          selectedDurability,
+          ['Medium (Standard)', 'High', 'Premium'],
+          (v) => setState(() => selectedDurability = v!),
+        ),
+        const SizedBox(height: 16),
+        _buildDropdownField(
+          'Breathability',
+          selectedBreathability,
+          ['High', 'Medium', 'Low'],
+          (v) => setState(() => selectedBreathability = v!),
+        ),
+      ],
+    );
+
+    final row3 = Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Stretch Percentage',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  suffixText: '%',
+                ),
+                controller: stretchController,
+              ),
+              Slider(
+                value: stretchPercentage,
+                min: 0,
+                max: 30,
+                onChanged: (v) => setState(() {
+                  stretchPercentage = v;
+                  stretchController.text = '${v.round()}';
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Shrinkage Rate',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  suffixText: '%',
+                ),
+                controller: shrinkageController,
+              ),
+              Slider(
+                value: shrinkageRate,
+                min: 0,
+                max: 10,
+                onChanged: (v) => setState(() {
+                  shrinkageRate = v;
+                  shrinkageController.text = '${v.round()}';
+                }),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final col3 = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Stretch Percentage',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            suffixText: '%',
+          ),
+          controller: stretchController,
+        ),
+        Slider(
+          value: stretchPercentage,
+          min: 0,
+          max: 30,
+          onChanged: (v) => setState(() {
+            stretchPercentage = v;
+            stretchController.text = '${v.round()}';
+          }),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Shrinkage Rate',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            suffixText: '%',
+          ),
+          controller: shrinkageController,
+        ),
+        Slider(
+          value: shrinkageRate,
+          min: 0,
+          max: 10,
+          onChanged: (v) => setState(() {
+            shrinkageRate = v;
+            shrinkageController.text = '${v.round()}';
+          }),
+        ),
+      ],
+    );
+
+    final row4 = Row(
+      children: [
+        Expanded(
+          child: _buildInputField('Thread Count', threadCountController),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Color Fastness (1-5)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text('${colorFastness.round()}/5'),
+                ],
+              ),
+              Slider(
+                value: colorFastness,
+                min: 1,
+                max: 5,
+                onChanged: (v) => setState(() => colorFastness = v),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final col4 = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInputField('Thread Count', threadCountController),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Color Fastness (1-5)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('${colorFastness.round()}/5'),
+          ],
+        ),
+        Slider(
+          value: colorFastness,
+          min: 1,
+          max: 5,
+          onChanged: (v) => setState(() => colorFastness = v),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Fabric Weight (GSM)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.layers, color: Color(0xFF64748B)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            suffixText: 'g/m²',
-                          ),
-                          controller: fabricWeightController,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Slider(
-                    value: fabricWeight,
-                    min: 100,
-                    max: 400,
-                    onChanged: (v) {
-                      setState(() {
-                        fabricWeight = v;
-                        fabricWeightController.text = '${v.round()}';
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              child: _buildDropdownField(
-                'Texture',
-                selectedTexture,
-                ['Smooth', 'Rough', 'Textured'],
-                (v) => setState(() => selectedTexture = v!),
-              ),
-            ),
-          ],
-        ),
+        isMobile ? col1 : row1,
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdownField(
-                'Durability Grade',
-                selectedDurability,
-                ['Medium (Standard)', 'High', 'Premium'],
-                (v) => setState(() => selectedDurability = v!),
-              ),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              child: _buildDropdownField(
-                'Breathability',
-                selectedBreathability,
-                ['High', 'Medium', 'Low'],
-                (v) => setState(() => selectedBreathability = v!),
-              ),
-            ),
-          ],
-        ),
+        isMobile ? col2 : row2,
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Stretch Percentage',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      suffixText: '%',
-                    ),
-                    controller: stretchController,
-                  ),
-                  Slider(
-                    value: stretchPercentage,
-                    min: 0,
-                    max: 30,
-                    onChanged: (v) {
-                      setState(() {
-                        stretchPercentage = v;
-                        stretchController.text = '${v.round()}';
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Shrinkage Rate',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      suffixText: '%',
-                    ),
-                    controller: shrinkageController,
-                  ),
-                  Slider(
-                    value: shrinkageRate,
-                    min: 0,
-                    max: 10,
-                    onChanged: (v) {
-                      setState(() {
-                        shrinkageRate = v;
-                        shrinkageController.text = '${v.round()}';
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        isMobile ? col3 : row3,
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInputField('Thread Count', threadCountController),
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Color Fastness (1-5)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text('${colorFastness.round()}/5'),
-                    ],
-                  ),
-                  Slider(
-                    value: colorFastness,
-                    min: 1,
-                    max: 5,
-                    onChanged: (v) => setState(() => colorFastness = v),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        isMobile ? col4 : row4,
         const SizedBox(height: 20),
         _buildInputField('Fabric Composition', compositionController),
         const SizedBox(height: 20),
@@ -1216,8 +1416,12 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: currentVal,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          // ফিক্স ৪: 'value' এর পরিবর্তে 'initialValue' ব্যবহার করা হয়েছে
+          initialValue: currentVal,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
@@ -1235,43 +1439,55 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildPatternModules() {
+  Widget _buildPatternModules(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60),
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 30 : 60),
       alignment: Alignment.center,
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pattern Modules',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Create independent pattern sections for modular design',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pattern Modules',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Modular design sections',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () {},
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text(
-                  'Add Module',
-                  style: TextStyle(color: Colors.white),
+                icon: const Icon(Icons.add, color: Colors.white, size: 16),
+                label: Text(
+                  'Add',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 12 : 14,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0B121E),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
             ],
@@ -1298,7 +1514,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
         ),
         const SizedBox(height: 12),
         Container(
-          height: 250,
+          height: 200,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
@@ -1310,7 +1526,7 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     );
   }
 
-  Widget _buildBulkProduction() {
+  Widget _buildBulkProduction(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1319,55 +1535,88 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(child: _buildInputField('Order ID', orderIdController)),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildInputField('Total Quantity', totalQtyController),
-            ),
-          ],
-        ),
+        isMobile
+            ? Column(
+                children: [
+                  _buildInputField('Order ID', orderIdController),
+                  const SizedBox(height: 16),
+                  _buildInputField('Total Quantity', totalQtyController),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: _buildInputField('Order ID', orderIdController),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildInputField(
+                      'Total Quantity',
+                      totalQtyController,
+                    ),
+                  ),
+                ],
+              ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInputField(
-                'Production Deadline',
-                deadlineController,
+        isMobile
+            ? Column(
+                children: [
+                  _buildInputField('Production Deadline', deadlineController),
+                  const SizedBox(height: 16),
+                  _buildDropdownField(
+                    'Priority Level',
+                    priorityLevel,
+                    ['Standard', 'High', 'Critical'],
+                    (v) => setState(() => priorityLevel = v!),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: _buildInputField(
+                      'Production Deadline',
+                      deadlineController,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildDropdownField(
+                      'Priority Level',
+                      priorityLevel,
+                      ['Standard', 'High', 'Critical'],
+                      (v) => setState(() => priorityLevel = v!),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: _buildDropdownField(
-                'Priority Level',
-                priorityLevel,
-                ['Standard', 'High', 'Critical'],
-                (v) => setState(() => priorityLevel = v!),
-              ),
-            ),
-          ],
-        ),
         const SizedBox(height: 20),
         const Text(
           'Size Distribution',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: sizeDist.entries.map((entry) {
-            return SizedBox(
-              width: 60,
-              child: _buildInputField(entry.key, entry.value),
-            );
-          }).toList(),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: sizeDist.entries.map((entry) {
+              return Padding(
+                // ফিক্স ২: EdgeInsets.right এর পরিবর্তে EdgeInsets.only ব্যবহার করা হয়েছে
+                padding: const EdgeInsets.only(right: 12.0),
+                child: SizedBox(
+                  width: 55,
+                  child: _buildInputField(entry.key, entry.value),
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSupplyChain() {
+  Widget _buildSupplyChain(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1383,19 +1632,25 @@ class _IndustrialFeaturesDialogState extends State<IndustrialFeaturesDialog> {
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(bool isMobile) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'All industrial settings are automatically included in your export',
-          style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+        const Expanded(
+          child: Text(
+            'Settings automatically included in export',
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF0F172A),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 18 : 28,
+              vertical: 16,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -1414,6 +1669,7 @@ class BlueprintGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint()
+      // ফিক্স ১: রানটাইম মেথড হওয়ায় এখান থেকে 'const' সরিয়ে ফেলা হয়েছে
       ..color = const Color(0xFFCBD5E1).withValues(alpha: 0.5)
       ..strokeWidth = 0.5;
     double step = 20;
@@ -1445,12 +1701,15 @@ class ExportDesignDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 650;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: Colors.white,
       child: Container(
-        width: 450,
-        padding: const EdgeInsets.all(28),
+        width: isMobile ? screenWidth * 0.90 : 450,
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1465,7 +1724,7 @@ class ExportDesignDialog extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Choose your preferred export format for production',
+              'Choose preferred format for production',
               style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 24),
@@ -1474,8 +1733,7 @@ class ExportDesignDialog extends StatelessWidget {
               iconColor: const Color(0xFF2563EB),
               bgColor: const Color(0xFFEFF6FF),
               title: 'DXF Format',
-              subtitle: 'For AutoCAD and industrial pattern making',
-              onTap: () => Navigator.pop(context),
+              subtitle: 'For AutoCAD and industrial making',
             ),
             const SizedBox(height: 14),
             _buildExportOption(
@@ -1484,7 +1742,6 @@ class ExportDesignDialog extends StatelessWidget {
               bgColor: const Color(0xFFF0FDF4),
               title: 'JSON Format',
               subtitle: 'Full design data with metadata',
-              onTap: () => Navigator.pop(context),
             ),
             const SizedBox(height: 14),
             _buildExportOption(
@@ -1493,7 +1750,6 @@ class ExportDesignDialog extends StatelessWidget {
               bgColor: const Color(0xFFF3E8FF),
               title: 'SVG Format',
               subtitle: 'Vector graphics for digital use',
-              onTap: () => Navigator.pop(context),
             ),
             const SizedBox(height: 24),
             Center(
@@ -1521,54 +1777,59 @@ class ExportDesignDialog extends StatelessWidget {
     required Color bgColor,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+    return Builder(
+      builder: (context) {
+        return InkWell(
+          onTap: () => Navigator.pop(context),
           borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF1E293B),
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 12,
-                    ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
