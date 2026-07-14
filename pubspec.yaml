@@ -19,7 +19,7 @@ dependencies:
   http: ^1.2.2
 
   google_generative_ai: ^0.4.7
-  flutter_dotenv: ^5.2.1 # <--- এটি অবশ্যই এখানে যুক্ত করবেন
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -29,6 +29,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # <--- নিচের এই দুটি লাইন একদম বামে স্পেস মেইনটেইন করে যুক্ত করুন
+  # লক্ষ্য করুন: flutter-এর নিচে ২টি স্পেস দিয়ে assets লিখতে হবে
   assets:
-    - .env
+    - .env  
