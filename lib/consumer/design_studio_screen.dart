@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'preview.dart';
+import 'ai_scanning_screen.dart'; // ScanResult model class import
+import 'preview.dart'; // ThreeDPreviewScreen ebong PreviewData framework
+import 'ai_image_service.dart'; // Active API trigger service file
 
 class DesignStudioScreen extends StatefulWidget {
-  const DesignStudioScreen({super.key});
+  final ScanResult scanResult;
+
+  const DesignStudioScreen({super.key, required this.scanResult});
 
   @override
   State<DesignStudioScreen> createState() => _DesignStudioScreenState();
@@ -10,192 +14,175 @@ class DesignStudioScreen extends StatefulWidget {
 
 class _DesignStudioScreenState extends State<DesignStudioScreen> {
   int _activeTabIndex = 0;
-  String _selectedFabric = 'Cotton';
-  String _selectedPattern = 'Solid';
-  int _selectedPrimaryColorIndex = 0;
-  int _selectedSecondaryColorIndex = 1;
-  String _selectedSleeveLength = 'Short';
-  String _selectedNeckline = 'Round';
-  final String _selectedFit = 'Regular';
-  String _selectedGarmentLength = 'Regular';
+  final AiImageService _aiImageService = AiImageService();
+  bool _isLoadingAI = false;
+
+  // 🟢 নতুন যুক্ত করা ভ্যারিয়েবল (Default: Women)
+  String _selectedUserType = 'Women';
+
+  // User-selected dynamic customization variables
+  String _selectedFabric = 'Silk';
+  String _selectedPattern = 'Classic Checkered';
+  int _selectedPrimaryColorIndex = 4; // Default: White
+  int _selectedSecondaryColorIndex = 3; // Default: Red
+  String _selectedSleeveLength = 'Short Sleeve';
+  String _selectedNeckline = 'Round Neck';
+
+  final String _selectedFit = 'Regular Fit';
+  final String _selectedGarmentLength = 'Standard Regular';
+
+  final List<Map<String, dynamic>> _colorSwatches = [
+    {'name': 'Midnight Navy', 'hex': '#1A1A2E'},
+    {'name': 'Deep Charcoal', 'hex': '#16213E'},
+    {'name': 'Royal Sapphire', 'hex': '#0F3460'},
+    {'name': 'Crimson Red', 'hex': '#E94560'},
+    {'name': 'Classic White', 'hex': '#FFFFFF'},
+    {'name': 'Matte Black', 'hex': '#000000'},
+  ];
 
   final Color backgroundColor = const Color(0xFFF4F6F9);
   final Color primaryDarkColor = const Color(0xFF111827);
   final Color subtitleColor = const Color(0xFF718096);
   final Color cardBgColor = Colors.white;
-  final Color unselectedBorderColor = const Color(0xFFE2E8F0);
+  final Color outlineBorderColor = const Color(0xFFE2E8F0);
 
-  final List<Color> _colorSwatches = [
-    const Color(0xFF16192E),
-    const Color(0xFF1E293B),
-    const Color(0xFF0F4C81),
-    const Color(0xFF583D8A),
-    const Color(0xFFE04A66),
-    const Color(0xFFF9690E),
-    const Color(0xFFF9A825),
-    const Color(0xFFE6E29B),
-    const Color(0xFFFFFFFF),
-    const Color(0xFF334155),
-    const Color(0xFFEF5350),
-    const Color(0xFFED7E43),
-    const Color(0xFFFDD835),
-    const Color(0xFF2ECC71),
-    const Color(0xFF6A1B9A),
-  ];
+  // 🟢 জেমিনি এআই-এর জন্য সম্পূর্ণ ডাইনামিক প্রম্পট ইঞ্জিন
+  String _buildCustomAiPrompt() {
+    final measurements = widget.scanResult.measurements;
+    final primaryColorName = _colorSwatches[_selectedPrimaryColorIndex]['name'];
+    final secondaryColorName =
+        _colorSwatches[_selectedSecondaryColorIndex]['name'];
+
+    // ইউজার টাইপ অনুযায়ী পোশাকের ধরন ডাইনামিক করা হচ্ছে
+    String garmentType = "casual outfit";
+    String modelAvatar = "model";
+
+    if (_selectedUserType == 'Boys') {
+      garmentType = "boy's t-shirt and pants clothing outfit";
+      modelAvatar = "young boy avatar";
+    } else if (_selectedUserType == 'Girls') {
+      garmentType = "girl's casual dress or frock";
+      modelAvatar = "young girl avatar";
+    } else if (_selectedUserType == 'Old Man') {
+      garmentType = "classic traditional senior man clothing outfit";
+      modelAvatar = "elderly senior man avatar";
+    } else if (_selectedUserType == 'Old Woman') {
+      garmentType = "elegant traditional senior woman dress";
+      modelAvatar = "elderly senior woman avatar";
+    } else if (_selectedUserType == 'Women') {
+      garmentType = "tailored modern woman's dress";
+      modelAvatar = "female avatar";
+    }
+
+    return "A professional studio lookbook 3D garment rendering of a $garmentType. "
+        "Fabric material: $_selectedFabric. Pattern design: $_selectedPattern with $primaryColorName as primary color and $secondaryColorName as secondary accent color lines. "
+        "Sleeve style: $_selectedSleeveLength, Neckline cut: $_selectedNeckline. "
+        "The clothing must be perfectly visualised on an $modelAvatar body posture matching specific measurements: "
+        "Shoulder: ${measurements['Shoulder'] ?? '16 in'}, Chest: ${measurements['Chest'] ?? '38 in'}, Waist: ${measurements['Waist'] ?? '32 in'}. "
+        "Solid simple light grey studio background, photorealistic high fashion textures.";
+  }
+
+  Future<void> _handlePreviewGenerationPipeline() async {
+    setState(() {
+      _isLoadingAI = true;
+    });
+
+    final calculatedPrompt = _buildCustomAiPrompt();
+
+    // 🟢 এআই সার্ভিস থেকে রিয়েল-টাইম জেনারেটেড ছবির লিঙ্ক বা ইউনিক ডাইনামিক লিঙ্ক নিয়ে আসা হচ্ছে
+    final String? serverGeneratedImageUrl = await _aiImageService
+        .generateDressImageFromPrompt(calculatedPrompt);
+
+    setState(() {
+      _isLoadingAI = false;
+    });
+
+    if (serverGeneratedImageUrl != null) {
+      final productionPayload = {
+        'preview_image_url': serverGeneratedImageUrl,
+        'fabric': _selectedFabric,
+        'pattern': _selectedPattern,
+        'primary_color_hex': _colorSwatches[_selectedPrimaryColorIndex]['hex'],
+        'secondary_color_hex':
+            _colorSwatches[_selectedSecondaryColorIndex]['hex'],
+        'sleeve_length': _selectedSleeveLength,
+        'neckline': _selectedNeckline,
+        'fit':
+            '$_selectedUserType Style ($_selectedFit)', // ইউজার টাইপ ট্র্যাকিং
+        'length': _selectedGarmentLength,
+        'measurements': widget.scanResult.measurements,
+      };
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ThreeDPreviewScreen(
+              passedDataPayload: PreviewData.fromJson(productionPayload),
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // LayoutBuilder ব্যবহার করা হয়েছে যাতে প্রতিবার রান বা রি-স্টার্টে নিখুঁত স্ক্রিন সাইজ পাওয়া যায়
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double screenWidth = constraints.maxWidth;
-            final bool isLargeScreen = screenWidth > 950;
-            final bool isMobile = screenWidth < 650;
-
-            return SingleChildScrollView(
-              padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 1300),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // হেডার সেকশন: মোবাইলের জন্য Column এবং ওয়েবের জন্য Row অটো হ্যান্ডেল করবে
-                      isMobile
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildHeaderTitle(),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: _buildPreviewButton(),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(child: _buildHeaderTitle()),
-                                const SizedBox(width: 16),
-                                _buildPreviewButton(),
-                              ],
-                            ),
-                      const SizedBox(height: 32),
-
-                      // মেইন কন্টেন্ট স্প্লিট
-                      isLargeScreen
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 6,
-                                  child: _buildCustomizerPanelCard(isMobile),
-                                ),
-                                const SizedBox(width: 32),
-                                Expanded(
-                                  flex: 4,
-                                  child: _buildLivePreviewCard(),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildCustomizerPanelCard(isMobile),
-                                const SizedBox(height: 32),
-                                _buildLivePreviewCard(),
-                              ],
-                            ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderTitle() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+      appBar: AppBar(
+        title: Text(
           'Design Studio',
           style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
             color: primaryDarkColor,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Customize your garment design',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: subtitleColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreviewButton() {
-    return ElevatedButton.icon(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ThreeDPreviewScreen()),
-        );
-      },
-      label: const Icon(Icons.arrow_forward, color: Colors.white, size: 16),
-      icon: const Text(
-        'Preview Design',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryDarkColor,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
       ),
-    );
-  }
-
-  Widget _buildCustomizerPanelCard(bool isMobile) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+      body: Column(
+        children: [
+          _buildAiProfileBanner(),
+          _buildCategoryTabs(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: _buildActiveTabContent(),
+            ),
           ),
+          _buildBottomActionBar(),
         ],
       ),
-      child: Column(
+    );
+  }
+
+  Widget _buildAiProfileBanner() {
+    return Container(
+      width: double.infinity,
+      color: primaryDarkColor,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
         children: [
-          _buildSegmentedTabBar(isMobile),
-          Padding(
-            padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
-            child: IndexedStack(
-              index: _activeTabIndex,
+          const Icon(Icons.bolt, color: Colors.amber, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFabricAndPatternTab(isMobile),
-                _buildColorsTab(),
-                _buildStyleAndFitTab(isMobile),
-                _buildDetailsTab(isMobile),
+                const Text(
+                  'AI Scanner Profile Connected',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  'Tone: ${widget.scanResult.skinTone} • Chest: ${widget.scanResult.measurements['Chest']}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -204,302 +191,245 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  Widget _buildSegmentedTabBar(bool isMobile) {
+  Widget _buildCategoryTabs() {
+    final tabs = ['Target Profile', 'Fabric & Pattern', 'Sleeves & Neck'];
     return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: unselectedBorderColor, width: 1),
-        ),
-      ),
+      color: Colors.white,
       child: Row(
-        children: [
-          _buildTabItem(0, Icons.layers_outlined, 'Fabric', isMobile),
-          _buildTabItem(1, Icons.palette_outlined, 'Colors', isMobile),
-          _buildTabItem(2, Icons.architecture_outlined, 'Style', isMobile),
-          _buildTabItem(3, Icons.info_outline, 'Details', isMobile),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(int index, IconData icon, String label, bool isMobile) {
-    final bool isActive = _activeTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _activeTabIndex = index),
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: isMobile ? 14 : 20),
-          decoration: BoxDecoration(
-            color: isActive ? primaryDarkColor : Colors.transparent,
-            borderRadius: index == 0
-                ? const BorderRadius.only(topLeft: Radius.circular(16))
-                : (index == 3
-                      ? const BorderRadius.only(topRight: Radius.circular(16))
-                      : null),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isActive ? Colors.white : subtitleColor,
-                size: 18,
-              ),
-              if (!isMobile) ...[
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isActive ? Colors.white : subtitleColor,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVariantSelectionSection(
-    String title,
-    List<String> options,
-    String currentSelection,
-    Function(String) onSelected,
-    bool isMobile,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: primaryDarkColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: isMobile ? 8 : 12,
-          runSpacing: isMobile ? 8 : 12,
-          children: options.map((item) {
-            final bool isSelected = item == currentSelection;
-            return InkWell(
-              onTap: () => onSelected(item),
-              borderRadius: BorderRadius.circular(12),
+        children: List.generate(tabs.length, (index) {
+          final isSelected = _activeTabIndex == index;
+          return Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _activeTabIndex = index),
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 16 : 24,
-                  vertical: isMobile ? 12 : 16,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected
-                        ? primaryDarkColor
-                        : unselectedBorderColor,
-                    width: isSelected ? 2 : 1,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected ? primaryDarkColor : Colors.transparent,
+                      width: 2,
+                    ),
                   ),
                 ),
                 child: Text(
-                  item,
+                  tabs[index],
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: primaryDarkColor,
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: isSelected
-                        ? FontWeight.w700
+                        ? FontWeight.bold
                         : FontWeight.normal,
+                    color: isSelected ? primaryDarkColor : subtitleColor,
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        ),
-      ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
-  Widget _buildFabricAndPatternTab(bool isMobile) {
-    return Column(
-      children: [
-        _buildVariantSelectionSection(
-          'Select Fabric',
-          ['Cotton', 'Silk', 'Linen', 'Wool', 'Polyester'],
-          _selectedFabric,
-          (val) => setState(() => _selectedFabric = val),
-          isMobile,
+  Widget _buildActiveTabContent() {
+    switch (_activeTabIndex) {
+      case 0: // 🟢 নতুন যুক্ত করা প্রথম ট্যাব: Target Profile (Boys, Girls, Old Man...)
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Who is this design for? (Target Profile)'),
+            _buildSelectionChips(
+              ['Women', 'Boys', 'Girls', 'Old Man', 'Old Woman'],
+              _selectedUserType,
+              (val) => setState(() => _selectedUserType = val),
+            ),
+          ],
+        );
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Select Fabric Material'),
+            _buildSelectionChips(
+              ['Silk', 'Cotton Pure', 'Premium Linen', 'Velvet Luxury'],
+              _selectedFabric,
+              (val) => setState(() => _selectedFabric = val),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionTitle('Select Design Pattern'),
+            _buildSelectionChips(
+              [
+                'Classic Checkered',
+                'Solid Minimal',
+                'Vertical Stripes',
+                'Floral Artistic',
+              ],
+              _selectedPattern,
+              (val) => setState(() => _selectedPattern = val),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionTitle('Primary Shade'),
+            _buildColorPaletteGrid(true),
+            const SizedBox(height: 24),
+            _buildSectionTitle('Accent Shade'),
+            _buildColorPaletteGrid(false),
+          ],
+        );
+      case 2:
+      default:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Sleeve Configuration'),
+            _buildSelectionChips(
+              [
+                'Sleeveless style',
+                'Short Sleeve',
+                'Full Bishop Sleeve',
+                'Three-Quarter Cut',
+              ],
+              _selectedSleeveLength,
+              (val) => setState(() => _selectedSleeveLength = val),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionTitle('Neckline Configuration'),
+            _buildSelectionChips(
+              [
+                'Round Neck',
+                'Mandarin Collar',
+                'Elegant V-Neck',
+                'Square Neckline',
+              ],
+              _selectedNeckline,
+              (val) => setState(() => _selectedNeckline = val),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: primaryDarkColor,
         ),
-        const SizedBox(height: 32),
-        _buildVariantSelectionSection(
-          'Pattern',
-          ['Solid', 'Stripes', 'Polka Dots', 'Floral'],
-          _selectedPattern,
-          (val) => setState(() => _selectedPattern = val),
-          isMobile,
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildStyleAndFitTab(bool isMobile) {
-    return Column(
-      children: [
-        _buildVariantSelectionSection(
-          'Sleeve Length',
-          ['Sleeveless', 'Short', 'Long'],
-          _selectedSleeveLength,
-          (val) => setState(() => _selectedSleeveLength = val),
-          isMobile,
-        ),
-        const SizedBox(height: 32),
-        _buildVariantSelectionSection(
-          'Neckline Style',
-          ['Round', 'V Neck', 'Collar'],
-          _selectedNeckline,
-          (val) => setState(() => _selectedNeckline = val),
-          isMobile,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsTab(bool isMobile) {
-    return _buildVariantSelectionSection(
-      'Garment Length',
-      ['Crop', 'Regular', 'Long'],
-      _selectedGarmentLength,
-      (val) => setState(() => _selectedGarmentLength = val),
-      isMobile,
-    );
-  }
-
-  Widget _buildColorsTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Primary Color',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: primaryDarkColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildColorGrid(
-          _selectedPrimaryColorIndex,
-          (idx) => setState(() => _selectedPrimaryColorIndex = idx),
-        ),
-        const SizedBox(height: 32),
-        Text(
-          'Secondary Color (Accents)',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: primaryDarkColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildColorGrid(
-          _selectedSecondaryColorIndex,
-          (idx) => setState(() => _selectedSecondaryColorIndex = idx),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildColorGrid(int selectedIndex, Function(int) onColorSelected) {
+  Widget _buildSelectionChips(
+    List<String> options,
+    String currentSelected,
+    Function(String) onSelect,
+  ) {
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: List.generate(_colorSwatches.length, (index) {
-        final bool isSelected = selectedIndex == index;
-        return GestureDetector(
-          onTap: () => onColorSelected(index),
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((opt) {
+        final isSelected = currentSelected == opt;
+        return ChoiceChip(
+          label: Text(opt),
+          selected: isSelected,
+          selectedColor: primaryDarkColor,
+          labelStyle: TextStyle(
+            color: isSelected ? Colors.white : primaryDarkColor,
+            fontSize: 13,
+          ),
+          onSelected: (selected) {
+            if (selected) onSelect(opt);
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildColorPaletteGrid(bool isPrimary) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 6,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+      ),
+      itemCount: _colorSwatches.length,
+      itemBuilder: (context, index) {
+        final swatch = _colorSwatches[index];
+        final hexColor = swatch['hex'].replaceAll('#', '');
+        final color = Color(int.parse('FF$hexColor', radix: 16));
+        final isSelected = isPrimary
+            ? _selectedPrimaryColorIndex == index
+            : _selectedSecondaryColorIndex == index;
+
+        return InkWell(
+          onTap: () {
+            setState(() {
+              if (isPrimary) {
+                _selectedPrimaryColorIndex = index;
+              } else {
+                _selectedSecondaryColorIndex = index;
+              }
+            });
+          },
           child: Container(
-            height: 48,
-            width: 48,
             decoration: BoxDecoration(
-              color: _colorSwatches[index],
-              borderRadius: BorderRadius.circular(10),
+              color: color,
+              shape: BoxShape.circle,
               border: Border.all(
-                color: isSelected ? primaryDarkColor : Colors.transparent,
+                color: isSelected ? primaryDarkColor : outlineBorderColor,
                 width: isSelected ? 3 : 1,
               ),
             ),
             child: isSelected
-                ? const Icon(Icons.check, color: Colors.white, size: 18)
-                : null,
+                ? Icon(
+                    Icons.check,
+                    color: color == Colors.white ? Colors.black : Colors.white,
+                    size: 20,
+                  )
+                : const SizedBox.shrink(),
           ),
         );
-      }),
+      },
     );
   }
 
-  Widget _buildLivePreviewCard() {
+  Widget _buildBottomActionBar() {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Live Preview',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: primaryDarkColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 260,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFF161624),
+      padding: const EdgeInsets.all(20),
+      color: Colors.white,
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryDarkColor,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildMetadataRow('Fabric:', _selectedFabric),
-          _buildMetadataRow('Pattern:', _selectedPattern),
-          _buildMetadataRow('Fit:', _selectedFit),
-          _buildMetadataRow('Neckline:', _selectedNeckline),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetadataRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: subtitleColor, fontSize: 14)),
-          Text(
-            value,
-            style: TextStyle(
-              color: primaryDarkColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+          onPressed: _isLoadingAI ? null : _handlePreviewGenerationPipeline,
+          child: _isLoadingAI
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+              : const Text(
+                  'Preview Design',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // Check and ensure the correct import path for your project setup
 import 'production_preview.dart';
+import 'ai_service.dart'; // ১. AI Service import add kora holo
 
 class ProductionDesignSystemScreen extends StatefulWidget {
   const ProductionDesignSystemScreen({super.key});
@@ -169,13 +170,82 @@ class _ProductionDesignSystemScreenState
             ],
           ),
           child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ThreeDProductionPreviewScreen(),
+            // ২. onPressed logic update kora holo (Async request handling grid)
+            onPressed: () async {
+              // A. Modern Loading Dialog Overlay active kora
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => Center(
+                  child: Card(
+                    color: cardBg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: accentOrange),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Generating CLO 3D CAD Design...",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               );
+
+              // B. API Service call kore asynchronous computation handle kora
+              String? imageUrl = await AiImageService.generateCloDressImage(
+                fabric: selectedFabric,
+                pattern: selectedPattern,
+                sleeve: selectedSleeveLength,
+                neckline: selectedNecklineStyle,
+                fit: selectedFitSpecification,
+                length: selectedGarmentLength,
+                primaryColor: selectedPrimaryColor,
+                secondaryColor: selectedSecondaryColor,
+              );
+
+              // C. Async gap complete hole loading popup clear kora
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+
+              // D. Image null na hole router pass kora, error thakle message throw kora
+              if (imageUrl != null) {
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ThreeDProductionPreviewScreen(
+                        generatedImageUrl:
+                            imageUrl, // Route dynamic URL token pass
+                      ),
+                    ),
+                  );
+                }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Failed to connect with AI Engine. Please try again.",
+                      ),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
+              }
             },
             icon: const Icon(
               Icons.arrow_forward,

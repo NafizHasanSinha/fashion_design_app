@@ -33,6 +33,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
     final password = _passwordController.text.trim();
     final fullName = _nameController.text.trim();
 
+    // ফ্রন্টএন্ড ভ্যালিডেশন চেক (ডিজাইন ও স্ট্রাকচার নষ্ট না করে)
     if (email.isEmpty || password.isEmpty || (isSignUp && fullName.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter all required fields.')),
@@ -51,41 +52,64 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
 
     try {
       if (isSignUp) {
-        // Run database registration via Supabase Auth
+        // সুপাবেস মেটাডাটাসহ রেজিস্ট্রেশন প্রসেস
         await _authService.signUp(
           email: email,
           password: password,
           metadata: {'full_name': fullName, 'role': 'consumer'},
         );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Registration successful! Processing entry...'),
+              content: Text(
+                'Registration successful! Please login with your credentials.',
+              ),
+              backgroundColor: Colors.green,
             ),
           );
+          // সাইন-আপ সফল হলে ফ্রন্টএন্ডের স্টেট লগইন মোডে নিয়ে যাওয়া হচ্ছে
+          setState(() {
+            isSignUp = false;
+            _passwordController.clear();
+            _confirmPasswordController.clear();
+          });
         }
       } else {
-        // Authenticate existing records
-        await _authService.signIn(email: email, password: password);
-      }
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const AiScanningScreen()),
+        // সুপাবেস সাইন-ইন প্রসেস
+        final response = await _authService.signIn(
+          email: email,
+          password: password,
         );
+
+        if (response.user != null && mounted) {
+          if (widget.onLoginSuccess != null) {
+            widget.onLoginSuccess!();
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AiScanningScreen()),
+          );
+        }
       }
     } catch (error) {
       if (mounted) {
+        // সুপাবেসের র-ইরর মেসেজগুলোকে ইউজার ফ্রেন্ডলি করা হলো
+        String errorMessage = error.toString();
+        if (errorMessage.contains('Invalid login credentials')) {
+          errorMessage = 'Incorrect email or password. Please try again!';
+        } else if (errorMessage.contains('User already registered')) {
+          errorMessage = 'This email is already registered. Try logging in!';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error.toString()),
+            content: Text(errorMessage),
             backgroundColor: Colors.redAccent,
           ),
         );
       }
     } finally {
-      // <--- এখানে 'final' পরিবর্তন করে 'finally' করা হয়েছে (FIXED)
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -101,7 +125,6 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    // কিবোর্ড স্ক্রিন ঢেকে ফেললে যেন Bottom Overflow না হয়, তাই SingleChildScrollView ব্যবহার করা হয়েছে
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +178,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
           TextFormField(
             controller: _emailController,
             enabled: !_isLoading,
+            keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               hintText: 'consumer@email.com',
               hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -259,8 +283,6 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
             onTap: _isLoading ? () {} : _submitConsumerForm,
           ),
           const SizedBox(height: 20),
-
-          // Row এর বদলে Wrap ব্যবহার করা হয়েছে সেফটির জন্য
           Center(
             child: Wrap(
               alignment: WrapAlignment.center,

@@ -84,7 +84,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          // Header text overflow প্রটেকশন
+          // Protection against header text overflow
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -387,7 +387,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              // ১ নম্বর ফিক্স: মাঝখানের টেক্সটগুলোকে Expanded করে দেওয়া হয়েছে যেন তারা বাঁদিকের অংশকে চাপ না দেয়
+              // Fix 1: Middle texts are wrapped in Expanded to prevent pushing content to the left side
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +395,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Text(
                       title,
                       maxLines:
-                          1, // টেক্সট ১ লাইনের বেশি হলে কেটে যাবে (Overflow হবে না)
+                          1, // Truncates text to a single line to avoid overflow
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: textDark,
@@ -415,8 +415,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(
                 width: 12,
-              ), // ডান এবং বাম পাশের কন্টেন্টের মাঝে সেফ স্পেস
-              // ২ নম্বর ফিক্স: ডান পাশের উইজেটকেও একটি নির্দিষ্ট বা মানানসই কাঠামোর মধ্যে আনা হয়েছে
+              ), // Safe space between left and right side contents
+              // Fix 2: Right side widget is structured with layout bounds to maintain symmetry
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
@@ -528,7 +528,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Icon(icon, color: textDark, size: 20),
               const SizedBox(width: 14),
               Expanded(
-                // কুইক অ্যাকশন টাইটেল লং হলেও যেন ভেঙে না যায়
+                // Ensures quick action title does not wrap or break even if it is long
                 child: Text(
                   title,
                   maxLines: 1,
