@@ -1,14 +1,12 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AiImageService {
-  final String _geminiApiKey =
-      'AQ.Ab8RN6JUB5CSkuXaKD53sF7uqBKLkrvbhpq-2_jyEgNfzm2Y7A';
+  final String _geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 
-  
   Future<String?> generateDressImageFromPrompt(String prompt) async {
-    
     final Random random = Random();
     final int timestamp = DateTime.now().millisecondsSinceEpoch;
     List<String> selectedPool = [];

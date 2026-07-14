@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AiImageService {
   // আপনার দেওয়া এপিআই কি
-  static const String _apiKey =
-      'AQ.Ab8RN6JUB5CSkuXaKD53sF7uqBKLkrvbhpq-2_jyEgNfzm2Y7A';
+  static String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
 
   // হেক্স কালার কোডকে সহজ ইংরেজি নামে রূপান্তর করার হেল্পার ফাংশন
   static String getColorName(Color color) {

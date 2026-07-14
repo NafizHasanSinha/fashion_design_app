@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/login.dart';
 
 // Supabase configuration credentials
@@ -8,6 +9,8 @@ const String supabaseAnonKey = 'sb_publishable_ha0ahlfBKe8zpelf3LnVbQ_l4CiGA2J';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
