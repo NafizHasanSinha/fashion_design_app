@@ -25,7 +25,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final Map<String, bool> _hoverStates = {};
   final _supabase = Supabase.instance.client;
 
-  // 🔥 ১. লাইভ কানেকশন ধরে রাখার জন্য পারসিস্টেন্ট স্ট্রিম ভেরিয়েবল
+  // Persistent stream variables to keep the live connection active
   late final Stream<List<Map<String, dynamic>>> _usersStream;
   late final Stream<List<Map<String, dynamic>>> _designsStatsStream;
   late final Stream<List<Map<String, dynamic>>> _exportsStream;
@@ -35,7 +35,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // 🔥 ২. initState-এ স্ট্রিমগুলো ডিফাইন করায় বারবার রিলোড হওয়া বন্ধ হবে
+    // Defining the streams in initState prevents repeated reloads
     _usersStream = _supabase.from('consumers').stream(primaryKey: ['id']);
     _designsStatsStream = _supabase
         .from('dress_designs')
@@ -168,7 +168,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             _buildLiveStatCard(
               title: 'Total Users',
-              stream: _usersStream, // 🔥 প্রাক-সংজ্ঞায়িত স্ট্রিম পাস করা হচ্ছে
+              stream: _usersStream, // Passing the pre-defined stream
               icon: Icons.people_alt_outlined,
               themeColor: userBlue,
               cardWidth: cardWidth,
@@ -382,10 +382,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 24),
 
           StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _recentDesignsStream, // 🔥 পারসিস্টেন্ট স্ট্রিম
+            stream: _recentDesignsStream, // Persistent stream
             builder: (context, snapshot) {
-              // 🔥 ৩. স্মার্ট চেকিং: কানেকশন ওয়েটিং কিন্তু কোনো ডাটা ক্যাশে নাই, শুধু তখনই লোডার দেখাবে।
-              // একবার ডাটা চলে আসলে ব্যাকগ্রাউন্ড আপডেটের সময় কোনো লোডার দেখাবে না।
               if (snapshot.connectionState == ConnectionState.waiting &&
                   !snapshot.hasData) {
                 return const Center(

@@ -187,7 +187,7 @@ class _ProductionDesignSystemScreenState
 
               if (imageUrl != null) {
                 if (context.mounted) {
-                  // এখানে সমস্ত প্যারামিটার প্রিভিউ স্ক্রিনে পাস করা হচ্ছে!
+                  // Pass all parameters to the preview screen here!
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -449,7 +449,7 @@ class _ProductionDesignSystemScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // ইউজারের চয়েসের উপর ভিত্তি করে ডাইনামিক রিকমেন্ডেশন!
+                  // Dynamic recommendations based on the user's choices!
                   _buildRecommendationBullet(
                     'Optimal design flow identified for $selectedAgeCategory frame.',
                   ),
@@ -740,7 +740,7 @@ class _ProductionDesignSystemScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '• ',
+            '- ',
             style: TextStyle(
               color: accentOrange,
               fontSize: 16,

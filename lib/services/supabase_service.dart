@@ -3,11 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseService {
   final _supabase = Supabase.instance.client;
 
-  // ১. নতুন ডিজাইন তৈরি হলে ট্র্যাক করা
+  // 1. Track when a new design is created
   Future<void> trackNewDesign({
     required String title,
-    required String createdBy, // ইউজারের নাম
-    required String status, // 'Completed' বা 'In Review'
+    required String createdBy, // User's name
+    required String status, // 'Completed' or 'In Review'
   }) async {
     await _supabase.from('dress_designs').insert({
       'title': title,
@@ -16,11 +16,11 @@ class SupabaseService {
     });
   }
 
-  // ২. ইমেজ বা পিডিএফ এক্সপোর্ট করলে ট্র্যাক করা
+  // 2. Track image or PDF exports
   Future<void> trackExport({
     required String userId,
     required String designId,
-    required String exportType, // 'PNG' অথবা 'PDF'
+    required String exportType, // 'PNG' or 'PDF'
   }) async {
     await _supabase.from('exports').insert({
       'user_id': userId,
@@ -29,7 +29,7 @@ class SupabaseService {
     });
   }
 
-  // ৩. কোনো ক্লায়েন্ট পেমেন্ট করলে রেভিনিউ যোগ করা
+  // 3. Add revenue when a client makes a payment
   Future<void> trackRevenue({
     required String clientId,
     required double amount,

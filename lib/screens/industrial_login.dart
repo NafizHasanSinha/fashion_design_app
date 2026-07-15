@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // সুপাবেস ক্লায়েন্ট ব্যবহারের জন্য যুক্ত করা হলো
+import 'package:supabase_flutter/supabase_flutter.dart'; // Added for Supabase client usage
 import '../screens/auth_service.dart';
 import '../Industrial_Client/production_design_screen.dart';
 
@@ -24,12 +24,12 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
   final _companyNameController = TextEditingController();
   final _businessIdController = TextEditingController();
   final _companyEmailController =
-      TextEditingController(); // ডুয়াল লগইন (ইমেইল অথবা কোম্পানি নেম) ও সাইন-আপ উভয়ের ইনপুট ফিল্ড
+      TextEditingController(); // Input field for dual login (email or company name) and sign-up
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
   final SupabaseClient _supabase =
-      Supabase.instance.client; // সুপাবেস ইনস্ট্যান্স
+      Supabase.instance.client; // Supabase instance
 
   void _submitIndustrialForm() async {
     final emailOrCompany = _companyEmailController.text.trim();
@@ -63,7 +63,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
       String targetEmail = emailOrCompany;
 
       if (isSignUp) {
-        // সুপাবেস মেটাডাটাসহ সাইন-আপ প্রসেস (রোল: industrial_client)
+        // Sign-up process with Supabase metadata (role: industrial_client)
         await _authService.signUp(
           email: targetEmail,
           password: password,
@@ -82,7 +82,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
               backgroundColor: Colors.green,
             ),
           );
-          // সাইন-আপ সফল হলে ফ্রন্টএন্ড স্টেট লগইন মোডে নিয়ে যাওয়া হচ্ছে
+          // After successful sign-up, switch the frontend state to login mode
           setState(() {
             isSignUp = false;
             _passwordController.clear();
@@ -90,9 +90,9 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
           });
         }
       } else {
-        // ডুয়াল লগইন লজিক: ইনপুটটি ইমেইল নাকি কোম্পানি নেম তা চেক করা হচ্ছে
+        // Dual login logic: check whether the input is an email or company name
         if (!targetEmail.contains('@')) {
-          // কোম্পানি নেম হলে ডাটাবেজের 'industrial_clients' টেবিল থেকে ইমেইল কুয়েরি করা হচ্ছে
+          // If a company name is provided, query the 'industrial_clients' table for the email
           final response = await _supabase
               .from('industrial_clients')
               .select('email')
@@ -108,7 +108,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
           }
         }
 
-        // প্রাপ্ত ইমেইল এবং পাসওয়ার্ড দিয়ে সুপাবেস সাইন-ইন
+        // Sign in with the resolved email and password
         await _authService.signIn(email: targetEmail, password: password);
 
         if (mounted) {
@@ -122,7 +122,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
       }
     } catch (error) {
       if (mounted) {
-        // সুপাবেস থেকে আসা র-ইরর মেসেজ ক্লিন করে দেখানো
+        // Clean and display the error messages returned by Supabase
         String cleanMessage = error.toString().replaceAll('Exception: ', '');
         if (cleanMessage.contains('Invalid login credentials')) {
           cleanMessage =
@@ -229,7 +229,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
             ),
             const SizedBox(height: 20),
           ],
-          // ডুয়াল হিন্ট টেক্সট সেটআপ করা হলো যাতে ইউজার বোঝে কোম্পানি নেমও দেওয়া যাবে
+          // Configure dual hint text so users understand they can enter a company name too
           Text(
             isSignUp ? 'Company Email Address' : 'Company Name / Email Address',
             style: TextStyle(
@@ -281,7 +281,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
             obscureText: true,
             enabled: !_isLoading,
             decoration: InputDecoration(
-              hintText: '••••••••',
+              hintText: '********',
               hintStyle: TextStyle(
                 color: Colors.grey.shade400,
                 letterSpacing: 2,
@@ -318,7 +318,7 @@ class _IndustrialLoginFormState extends State<IndustrialLoginForm> {
               obscureText: true,
               enabled: !_isLoading,
               decoration: InputDecoration(
-                hintText: '••••••••',
+                hintText: '********',
                 hintStyle: TextStyle(
                   color: Colors.grey.shade400,
                   letterSpacing: 2,

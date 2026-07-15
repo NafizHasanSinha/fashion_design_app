@@ -20,7 +20,7 @@ class _AdministratorLoginFormState extends State<AdministratorLoginForm> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  // By Default হার্ডকোডেড অ্যাডমিন ক্রেডেনশিয়ালস
+  // Hardcoded default administrator credentials
   final String _defaultAdminId = 'Admin';
   final String _defaultPassword = '111111';
 
@@ -28,7 +28,7 @@ class _AdministratorLoginFormState extends State<AdministratorLoginForm> {
     final inputId = _adminIdController.text.trim();
     final password = _passwordController.text.trim();
 
-    // খালি ইনপুট ফিল্ড চেক
+    // Check for empty input fields
     if (inputId.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -40,11 +40,11 @@ class _AdministratorLoginFormState extends State<AdministratorLoginForm> {
 
     setState(() => _isLoading = true);
 
-    // রিয়ালিস্টিক ফিল দেওয়ার জন্য একটি কৃত্রিম ডিলে (Delay) যুক্ত করা হলো
+    // Add a brief artificial delay to make the flow feel more realistic
     await Future.delayed(const Duration(milliseconds: 800));
 
     try {
-      // বাই-ডিফল্ট ক্রেডেনশিয়ালের সাথে ইনপুট ম্যাচিং জোনে চেকিং
+      // Check the input against the default credentials
       if (inputId == _defaultAdminId && password == _defaultPassword) {
         if (mounted) {
           Navigator.pushAndRemoveUntil(
@@ -56,7 +56,7 @@ class _AdministratorLoginFormState extends State<AdministratorLoginForm> {
           );
         }
       } else {
-        // আইডি বা পাসওয়ার্ড ভুল হলে কাস্টম ইরর থ্রো করা হচ্ছে
+        // Throw a custom error when the ID or password is incorrect
         throw 'Incorrect Admin ID or Password!';
       }
     } catch (error) {
@@ -131,7 +131,7 @@ class _AdministratorLoginFormState extends State<AdministratorLoginForm> {
           obscureText: true,
           enabled: !_isLoading,
           decoration: InputDecoration(
-            hintText: '••••••••',
+            hintText: '********',
             hintStyle: TextStyle(color: Colors.grey.shade400, letterSpacing: 2),
             prefixIcon: Icon(Icons.lock_outline, color: widget.subTextColor),
             contentPadding: const EdgeInsets.symmetric(vertical: 16),

@@ -26,7 +26,7 @@ class AiDressGeneratorScreen extends StatefulWidget {
 class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
   late String _imageUrl;
   bool _isLoading = true;
-  bool _isExporting = false; // এক্সপোর্ট করার সময় লোডার দেখানোর জন্য
+  bool _isExporting = false; // Show a loader while exporting
   int _randomSeed = Random().nextInt(10000);
 
   @override
@@ -69,22 +69,22 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
     });
   }
 
-  // --- ইমেজ এক্সপোর্ট করার মেইন লজিক ---
+  // --- Main image export logic ---
   Future<void> _exportAsImage() async {
     if (!mounted) return;
     setState(() => _isExporting = true);
     try {
-      // ১. ইউআরএল থেকে ইমেজের বাইট ডাটা ডাউনলোড করা
+      // 1. Download image bytes from the URL
       final response = await http.get(Uri.parse(_imageUrl));
       if (response.statusCode == 200) {
-        // ২. লোকাল ক্যাশ ডিরেক্টরি খুঁজে ফাইল তৈরি করা
+        // 2. Find the local cache directory and create the file
         final tempDir = await getTemporaryDirectory();
         final file = File('${tempDir.path}/AI_Dress_Design_$_randomSeed.jpg');
 
-        // ৩. ফাইলে বাইট রাইট করা
+        // 3. Write the bytes to the file
         await file.writeAsBytes(response.bodyBytes);
 
-        // ৪. ইউজারকে ফাইলটি শেয়ার/ডাউনলোড করার পপআপ দেখানো
+        // 4. Show the share/download prompt to the user
         await Share.shareXFiles([
           XFile(file.path),
         ], text: 'Check out my AI Dress Design!');
@@ -100,17 +100,17 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
     }
   }
 
-  // --- পিডিএফ এক্সপোর্ট করার মেইন লজিক ---
+  // --- Main PDF export logic ---
   Future<void> _exportAsPdf() async {
     if (!mounted) return;
     setState(() => _isExporting = true);
     try {
-      // ১. ইমেজ ডাটা ডাউনলোড
+      // 1. Download image data
       final response = await http.get(Uri.parse(_imageUrl));
       if (response.statusCode == 200) {
         final pdf = pw.Document();
 
-        // ২. ডাউনলোডেড ইমেজ দিয়ে PDF পেজ লেআউট তৈরি করা
+        // 2. Build the PDF page layout using the downloaded image
         final image = pw.MemoryImage(response.bodyBytes);
         pdf.addPage(
           pw.Page(
@@ -142,12 +142,12 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
           ),
         );
 
-        // ৩. পিডিএফ ফাইলটি মেমরিতে সাময়িকভাবে সেভ করা
+        // 3. Temporarily save the PDF file to storage
         final tempDir = await getTemporaryDirectory();
         final file = File('${tempDir.path}/AI_Dress_Design_$_randomSeed.pdf');
         await file.writeAsBytes(await pdf.save());
 
-        // ৪. ইউজারকে শেয়ার করার অপশন দেওয়া
+        // 4. Offer the user a sharing option
         await Share.shareXFiles([
           XFile(file.path),
         ], text: 'Exported PDF Blueprint');
@@ -163,7 +163,7 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
     }
   }
 
-  // বটম শিট ওপেন করে ইউজারকে ইমেজ নাকি পিডিএফ চান তা জিজ্ঞেস করা
+  // Open a bottom sheet to ask the user whether they want an image or PDF
   void _showExportOptions() {
     showModalBottomSheet(
       context: context,
@@ -265,7 +265,7 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // ১. ইমেজ দেখানোর কন্টেইনার
+            // 1. Image display container
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -328,7 +328,7 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ২. রেন্ডারিং ব্লুপ্রিন্ট
+            // 2. Rendering blueprint
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -365,7 +365,7 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ৩. বাটন (Edit Style & Regenerate)
+            // 3. Buttons (Edit Style & Regenerate)
             Row(
               children: [
                 Expanded(

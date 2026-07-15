@@ -6,12 +6,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
-import 'ai_service.dart'; // AiImageService থেকে কালার নেম নিয়ে আসার জন্য
+import 'ai_service.dart'; // Import AiImageService to get color names
 
 class ThreeDProductionPreviewScreen extends StatefulWidget {
   final String? generatedImageUrl;
 
-  // ডাইনামিক স্পেসিফিকেশনগুলো রিসিভ করার জন্য ফিল্ডসমূহ
+  // Fields to receive dynamic specifications
   final String targetAge;
   final String fabric;
   final String pattern;
@@ -100,7 +100,7 @@ class _ThreeDProductionPreviewScreenState
     }
   }
 
-  // ডাইনামিক পিডিএফ মেকার ফাংশন
+  // Dynamic PDF generation function
   Future<void> _exportPdf() async {
     if (widget.generatedImageUrl == null) {
       _showSnackBar("No design available to export as PDF", isError: true);
@@ -547,7 +547,7 @@ class _ThreeDProductionPreviewScreenState
     );
   }
 
-  // স্পেসিফিকেশন টেবিল (এখন ইউজারের পাঠানো ডেটা দেখাবে!)
+  // Specification table (now shows the data sent by the user!)
   Widget _buildSpecsSidebar() {
     final String pColorName = AiImageService.getColorName(widget.primaryColor);
     final String sColorName = AiImageService.getColorName(
@@ -579,7 +579,7 @@ class _ThreeDProductionPreviewScreenState
             ),
           ),
           const SizedBox(height: 16),
-          // ডাইনামিক রো ডেটা রেন্ডার করা হচ্ছে
+          // Rendering the dynamic row data
           _buildRowData('Target Age', widget.targetAge, false),
           _buildRowData('Fabric selection', widget.fabric, false),
           _buildRowData('Pattern Type', widget.pattern, false),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// কালার এবং নামের ম্যাপিং অবজেক্ট স্ট্রাকচার (একমাত্র এখানেই ডিফাইন করা থাকবে)
+// Color and name mapping object structure (defined only here)
 class ManufacturingColor {
   final Color color;
   final String name;
@@ -11,7 +11,7 @@ class ManufacturingColor {
   const ManufacturingColor(this.color, this.name);
 }
 
-// আপনার UI স্ক্রিনে ব্যবহৃত সম্পূর্ণ কালার প্যালেটের তালিকা
+// Complete color palette used in the UI screens
 final List<ManufacturingColor> industrialColorPalette = [
   const ManufacturingColor(Color(0xFF1A1A2E), "Midnight Navy"),
   const ManufacturingColor(Color(0xFF243B55), "Deep Sapphire"),
@@ -47,7 +47,7 @@ class AiImageService {
     return "Custom Tailored Color";
   }
 
-  // HEAD অপ্টিমাইজড এবং র্যান্ডম সীড সহ জেনারেশন ফাংশন
+  // Head-optimized generation function with a random seed
   static Future<String?> generateCloDressImage({
     required String targetAge,
     required String fabric,
@@ -76,12 +76,12 @@ class AiImageService {
       final String finalImageUrl =
           "https://image.pollinations.ai/p/$encodedPrompt?width=1024&height=1024&seed=$randomSeed&model=flux";
 
-      // দ্রুত কানেকশন ভ্যালিডেশন (ব্যান্ডউইথ অপ্টিমাইজড)
+      // Quick connection validation (bandwidth optimized)
       final response = await http.head(Uri.parse(finalImageUrl));
       if (response.statusCode == 200) {
         return finalImageUrl;
       } else {
-        return finalImageUrl; // ব্যাকআপ হিসেবে সরাসরি ইউআরএল রিটার্ন
+        return finalImageUrl; // Return the URL directly as a fallback
       }
     } catch (e) {
       debugPrint("Something went wrong inside AI Service: $e");

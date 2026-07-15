@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'ai_dress_generator_screen.dart'; // ফাইল পাথ আপনার প্রজেক্ট অনুযায়ী ঠিক করে নেবেন
+import 'ai_dress_generator_screen.dart'; // Adjust the file path to match your project structure
 
 class DesignStudioScreen extends StatefulWidget {
   const DesignStudioScreen({super.key});
@@ -14,9 +14,9 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
   bool _isLoadingScan = true;
   bool _isSavingDesign = false;
 
-  // AI বডি স্ক্যান ডাটা ভেরিয়েবলস
+  // AI body scan data variables
   String? _scanId;
-  String _genderGroupType = 'Woman'; // ডিফল্টভাবে মেয়েদের জন্য ফিক্স করা হলো
+  String _genderGroupType = 'Woman'; // Fixed to female by default
   String _ageCategory = '18+';
   String _skinTone = 'Medium Tan';
   String _faceShape = 'Oval';
@@ -24,7 +24,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
   String _waistMeasurement = '28"';
   String _shoulderMeasurement = '15"';
 
-  // ইউজারের সিলেক্টেড ড্রেস কাস্টমাইজেশন অপশনস (Default Values)
+  // User-selected dress customization options (default values)
   String _selectedFabric = 'Silk';
   String _selectedPattern = 'Minimal';
   String _selectedSilhouette = 'A-Line';
@@ -44,7 +44,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     _fetchLatestBodyScan();
   }
 
-  // সুপাবেস থেকে ইউজারের লেটেস্ট বডি স্ক্যান ডাটা রিট্রাইভ করার মেথড
+  // Retrieve the user's latest body scan data from Supabase
   Future<void> _fetchLatestBodyScan() async {
     try {
       final currentUser = _supabase.auth.currentUser;
@@ -64,7 +64,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
       if (response != null) {
         setState(() {
           _scanId = response['id'];
-          // যদি ভুল করে ছেলেদের ডাটা আসে, তবুও ডিফল্ট Woman সেট করবে
+          // If male data is received by mistake, fall back to the default Woman setting
           String scannedGender = response['gender_group_type'] ?? 'Woman';
           _genderGroupType =
               scannedGender.contains('Man') || scannedGender.contains('Boy')
@@ -92,7 +92,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     }
   }
 
-  // ইউজারের প্রোফাইল এডিট করার ডায়ালগ
+  // Dialog for editing the user's profile
   void _showEditProfileDialog() {
     final chestCtrl = TextEditingController(
       text: _chestMeasurement.replaceAll('"', ''),
@@ -128,7 +128,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                   children: [
                     DropdownButtonFormField<String>(
                       initialValue:
-                          tempGender, // 'value' পরিবর্তিত হয়ে 'initialValue' হয়েছে
+                          tempGender, // 'value' changed to 'initialValue'
                       decoration: const InputDecoration(
                         labelText: 'Target Body (Female Only)',
                       ),
@@ -150,7 +150,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Baby',
                           ].contains(tempAge)
                           ? tempAge
-                          : '18+', // 'initialValue' ব্যবহার করা হয়েছে
+                          : '18+', // 'initialValue' used here
                       decoration: const InputDecoration(
                         labelText: 'Age Category',
                       ),
@@ -171,7 +171,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Deep Espresso',
                           ].contains(tempSkinTone)
                           ? tempSkinTone
-                          : 'Medium Tan', // 'initialValue' ব্যবহার করা হয়েছে
+                          : 'Medium Tan', // 'initialValue' used here
                       decoration: const InputDecoration(labelText: 'Skin Tone'),
                       items:
                           [
@@ -199,7 +199,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Diamond',
                           ].contains(tempFaceShape)
                           ? tempFaceShape
-                          : 'Oval', // 'initialValue' ব্যবহার করা হয়েছে
+                          : 'Oval', // 'initialValue' used here
                       decoration: const InputDecoration(
                         labelText: 'Face Shape',
                       ),
@@ -307,7 +307,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  // সুপাবেসে ডিজাইন সেভ করার মেথড
+  // Save the design to Supabase
   Future<void> _saveDressDesign() async {
     setState(() => _isSavingDesign = true);
 
@@ -336,7 +336,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     } catch (e) {
       _showSnackBar('Error saving design: ${e.toString()}', Colors.redAccent);
     } finally {
-      // 'final' কীওয়ার্ডটি এখানে সংশোধন করে 'finally' করা হয়েছে
+      // The 'final' keyword was corrected to 'finally' here
       if (mounted) setState(() => _isSavingDesign = false);
     }
   }
@@ -832,7 +832,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ChoiceChip(
                     showCheckmark:
-                        false, // চিপ দেখতে সুন্দর করার জন্য ডিফল্ট টিকমার্ক হাইড করা হলো
+                        false, // Hide the default checkmark to make the chip look cleaner
                     label: Text(
                       option,
                       style: TextStyle(

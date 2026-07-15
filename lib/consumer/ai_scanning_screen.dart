@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart'
-    show Uint8List, kIsWeb; // Uint8List এবং kIsWeb এর জন্য
+    show Uint8List, kIsWeb; // For Uint8List and kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'consumer_profile.dart';
 
-// Design Studio স্ক্রিনটি ইমপোর্ট করা হলো
+// Import the Design Studio screen
 import 'design_studio_screen.dart';
 
 class AiScanningScreen extends StatefulWidget {
@@ -18,13 +19,15 @@ class AiScanningScreen extends StatefulWidget {
 
 class _AiScanningScreenState extends State<AiScanningScreen> {
   XFile? _selectedImage;
-  Uint8List?
-  _webImageBytes; // ১. ওয়েবের ইমেজের বাইটস রাখার জন্য নতুন ভ্যারিয়েবল
+  Uint8List? _webImageBytes; // New variable to hold web image bytes
   final ImagePicker _picker = ImagePicker();
   bool _isScanning = false;
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // ক্যামেরা অথবা গ্যালারি থেকে ছবি নেওয়ার বটম শিট অপশন
+  // 🔥 Navigation Bar এর জন্য কারেন্ট ইনডেক্স ট্র্যাক করার ভেরিয়েবল
+  int _currentIndex = 0;
+
+  // Bottom sheet options for taking a photo from the camera or gallery
   void _showImageSourceActionSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -56,7 +59,7 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
     );
   }
 
-  // ইমেজ পিক করার মেথড
+  // Image picking method
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -65,7 +68,6 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
       );
 
       if (pickedFile != null) {
-        // ২. যদি ওয়েব হয়, তবে ইমেজটিকে সরাসরি বাইট হিসেবে রিড করে নেব
         if (kIsWeb) {
           final Uint8List imageBytes = await pickedFile.readAsBytes();
           setState(() {
@@ -73,7 +75,6 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
             _webImageBytes = imageBytes;
           });
         } else {
-          // মোবাইলের জন্য স্বাভাবিক নিয়ম
           setState(() {
             _selectedImage = pickedFile;
           });
@@ -84,7 +85,7 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
     }
   }
 
-  // AI বডি স্ক্যান অ্যানিমেশন এবং ডাটা জেনারেশন মেথড
+  // AI body scan animation and data generation method
   Future<void> _startAiScanning() async {
     if (_selectedImage == null) {
       _showSnackBar(
@@ -264,9 +265,8 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // ডায়ালগটি বন্ধ করবে
+              Navigator.pop(context); // Close the dialog
 
-              // ডেটাবেজে সেভ হয়েছে, তাই সরাসরি Design Studio স্ক্রিনে নেভিগেট করবে
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -365,11 +365,11 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
                                 ? Image.memory(
                                     _webImageBytes!,
                                     fit: BoxFit.cover,
-                                  ) // ৩. ওয়েবের জন্য সরাসরি মেমোরি বাইটস থেকে রেন্ডার করবে
+                                  )
                                 : Image.file(
                                     File(_selectedImage!.path),
                                     fit: BoxFit.cover,
-                                  )) // মোবাইলের জন্য ফাইল পাথ
+                                  ))
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -493,6 +493,40 @@ class _AiScanningScreenState extends State<AiScanningScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ConsumerProfileScreen(),
+              ),
+            );
+          }
+        },
+        selectedItemColor: const Color(0xFF111827),
+        unselectedItemColor: Colors.grey.shade500,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.biotech_outlined),
+            activeIcon: Icon(Icons.biotech),
+            label: 'AI Scan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );

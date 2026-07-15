@@ -33,7 +33,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
     final password = _passwordController.text.trim();
     final fullName = _nameController.text.trim();
 
-    // ফ্রন্টএন্ড ভ্যালিডেশন চেক (ডিজাইন ও স্ট্রাকচার নষ্ট না করে)
+    // Frontend validation check (without breaking the design or structure)
     if (email.isEmpty || password.isEmpty || (isSignUp && fullName.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter all required fields.')),
@@ -52,7 +52,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
 
     try {
       if (isSignUp) {
-        // সুপাবেস মেটাডাটাসহ রেজিস্ট্রেশন প্রসেস
+        // Registration process with Supabase metadata
         await _authService.signUp(
           email: email,
           password: password,
@@ -68,7 +68,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
               backgroundColor: Colors.green,
             ),
           );
-          // সাইন-আপ সফল হলে ফ্রন্টএন্ডের স্টেট লগইন মোডে নিয়ে যাওয়া হচ্ছে
+          // After successful sign-up, switch the frontend state to login mode
           setState(() {
             isSignUp = false;
             _passwordController.clear();
@@ -76,7 +76,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
           });
         }
       } else {
-        // সুপাবেস সাইন-ইন প্রসেস
+        // Supabase sign-in process
         final response = await _authService.signIn(
           email: email,
           password: password,
@@ -94,7 +94,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
       }
     } catch (error) {
       if (mounted) {
-        // সুপাবেসের র-ইরর মেসেজগুলোকে ইউজার ফ্রেন্ডলি করা হলো
+        // Make Supabase error messages more user-friendly
         String errorMessage = error.toString();
         if (errorMessage.contains('Invalid login credentials')) {
           errorMessage = 'Incorrect email or password. Please try again!';
@@ -213,7 +213,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
             obscureText: true,
             enabled: !_isLoading,
             decoration: InputDecoration(
-              hintText: '••••••••',
+              hintText: '********',
               hintStyle: TextStyle(
                 color: Colors.grey.shade400,
                 letterSpacing: 2,
@@ -250,7 +250,7 @@ class _ConsumerLoginFormState extends State<ConsumerLoginForm> {
               obscureText: true,
               enabled: !_isLoading,
               decoration: InputDecoration(
-                hintText: '••••••••',
+                hintText: '********',
                 hintStyle: TextStyle(
                   color: Colors.grey.shade400,
                   letterSpacing: 2,
