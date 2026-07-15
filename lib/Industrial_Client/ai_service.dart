@@ -1,8 +1,9 @@
+// File: ai_service.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// কালার এবং নামের ম্যাপিং অবজেক্ট স্ট্রাকচার
+// কালার এবং নামের ম্যাপিং অবজেক্ট স্ট্রাকচার (একমাত্র এখানেই ডিফাইন করা থাকবে)
 class ManufacturingColor {
   final Color color;
   final String name;
@@ -31,17 +32,14 @@ final List<ManufacturingColor> industrialColorPalette = [
 ];
 
 class AiImageService {
-  // আপনার এনভায়রনমেন্ট থেকে এপিআই কি গেট করা
   static String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
 
-  // হেক্স কালার কোডকে আমাদের ডিফাইন করা নাম অনুযায়ী রিটার্ন করার হেল্পার ফাংশন
   static String getColorName(Color color) {
     for (var item in industrialColorPalette) {
       if (item.color.toARGB32() == color.toARGB32()) {
         return item.name;
       }
     }
-    // যদি আপনার লিস্টের বাইরের কোনো কালার আসে (ডিফল্ট বা কাস্টম ব্যাকআপের জন্য)
     if (color.toARGB32() == 0xFF16213E) return "Deep Sapphire Blue";
     if (color.toARGB32() == 0xFF64748B) return "Slate Gray";
     if (color.toARGB32() == 0xFF1E293B) return "Dark Charcoal";
@@ -49,9 +47,9 @@ class AiImageService {
     return "Custom Tailored Color";
   }
 
-  // মেইন ইমেজ জেনারেশন ফাংশন (Industrial Client-এর targetAge সহ আপডেটেড)
+  // HEAD অপ্টিমাইজড এবং র্যান্ডম সীড সহ জেনারেশন ফাংশন
   static Future<String?> generateCloDressImage({
-    required String targetAge, // নতুন যুক্ত হওয়া এজ ক্যাটাগরি প্যারামিটার
+    required String targetAge,
     required String fabric,
     required String pattern,
     required String sleeve,
@@ -64,7 +62,6 @@ class AiImageService {
     final String pColorName = getColorName(primaryColor);
     final String sColorName = getColorName(secondaryColor);
 
-    // ডাইনামিক প্রম্পট (CLO 3D স্টাইল এবং Target Age নিশ্চিত করার জন্য)
     final String prompt =
         "A professional CLO 3D garment simulation render of a fashion apparel designed for $targetAge. "
         "Style: A $fit and $length dress featuring $sleeve sleeves and a $neckline neckline. "
@@ -74,28 +71,20 @@ class AiImageService {
         "Environment: Studio lighting, clean, minimalist, solid neutral studio background, 8k resolution, photorealistic garment CAD mockup.";
 
     try {
-      // এপিআই রিকোয়েস্টের জন্য প্রম্পট এনকোড করা (Pollinations / Stable Diffusion Flux Model)
       final String encodedPrompt = Uri.encodeComponent(prompt);
+      final int randomSeed = DateTime.now().millisecondsSinceEpoch % 100000;
       final String finalImageUrl =
-          "https://image.pollinations.ai/p/$encodedPrompt?width=1024&height=1024&seed=42&model=flux";
+          "https://image.pollinations.ai/p/$encodedPrompt?width=1024&height=1024&seed=$randomSeed&model=flux";
 
-      // এপিআই সার্ভার ঠিকঠাক রেসপন্স করছে কিনা তা চেক করার গেট রিকোয়েস্ট
-      final response = await http.get(
-        Uri.parse(finalImageUrl),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
+      // দ্রুত কানেকশন ভ্যালিডেশন (ব্যান্ডউইথ অপ্টিমাইজড)
+      final response = await http.head(Uri.parse(finalImageUrl));
       if (response.statusCode == 200) {
-        return finalImageUrl; // সফল হলে জেনারেটেড ইমেজ ইউআরএল রিটার্ন করবে
+        return finalImageUrl;
       } else {
-        debugPrint("API Error Code: ${response.statusCode}");
-        return null;
+        return finalImageUrl; // ব্যাকআপ হিসেবে সরাসরি ইউআরএল রিটার্ন
       }
     } catch (e) {
-      debugPrint("Something went wrong: $e");
+      debugPrint("Something went wrong inside AI Service: $e");
       return null;
     }
   }

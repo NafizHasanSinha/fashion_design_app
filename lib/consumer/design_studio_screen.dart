@@ -92,7 +92,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     }
   }
 
-  // ইউজারের প্রোফাইল এডিট করার ডায়ালগ (ভুল ডেটা ঠিক করার জন্য)
+  // ইউজারের প্রোফাইল এডিট করার ডায়ালগ
   void _showEditProfileDialog() {
     final chestCtrl = TextEditingController(
       text: _chestMeasurement.replaceAll('"', ''),
@@ -109,7 +109,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     String tempSkinTone = _skinTone;
     String tempFaceShape = _faceShape;
 
-    // শুধুমাত্র মেয়েদের ক্যাটাগরি
     final femaleGenders = ['Woman', 'Old Woman', 'Girl', 'Baby Girl'];
     if (!femaleGenders.contains(tempGender)) tempGender = 'Woman';
 
@@ -128,7 +127,8 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: tempGender,
+                      initialValue:
+                          tempGender, // 'value' পরিবর্তিত হয়ে 'initialValue' হয়েছে
                       decoration: const InputDecoration(
                         labelText: 'Target Body (Female Only)',
                       ),
@@ -142,7 +142,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value:
+                      initialValue:
                           [
                             '18+',
                             'Middle Age',
@@ -150,7 +150,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Baby',
                           ].contains(tempAge)
                           ? tempAge
-                          : '18+',
+                          : '18+', // 'initialValue' ব্যবহার করা হয়েছে
                       decoration: const InputDecoration(
                         labelText: 'Age Category',
                       ),
@@ -163,7 +163,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value:
+                      initialValue:
                           [
                             'Fair Light',
                             'Medium Tan',
@@ -171,7 +171,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Deep Espresso',
                           ].contains(tempSkinTone)
                           ? tempSkinTone
-                          : 'Medium Tan',
+                          : 'Medium Tan', // 'initialValue' ব্যবহার করা হয়েছে
                       decoration: const InputDecoration(labelText: 'Skin Tone'),
                       items:
                           [
@@ -190,7 +190,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value:
+                      initialValue:
                           [
                             'Oval',
                             'Round',
@@ -199,7 +199,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                             'Diamond',
                           ].contains(tempFaceShape)
                           ? tempFaceShape
-                          : 'Oval',
+                          : 'Oval', // 'initialValue' ব্যবহার করা হয়েছে
                       decoration: const InputDecoration(
                         labelText: 'Face Shape',
                       ),
@@ -258,7 +258,12 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    chestCtrl.dispose();
+                    waistCtrl.dispose();
+                    shoulderCtrl.dispose();
+                    Navigator.pop(context);
+                  },
                   child: const Text(
                     'Cancel',
                     style: TextStyle(color: Colors.grey),
@@ -274,10 +279,19 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                       _ageCategory = tempAge;
                       _skinTone = tempSkinTone;
                       _faceShape = tempFaceShape;
-                      _chestMeasurement = '${chestCtrl.text}"';
-                      _waistMeasurement = '${waistCtrl.text}"';
-                      _shoulderMeasurement = '${shoulderCtrl.text}"';
+                      _chestMeasurement = chestCtrl.text.isEmpty
+                          ? '0"'
+                          : '${chestCtrl.text}"';
+                      _waistMeasurement = waistCtrl.text.isEmpty
+                          ? '0"'
+                          : '${waistCtrl.text}"';
+                      _shoulderMeasurement = shoulderCtrl.text.isEmpty
+                          ? '0"'
+                          : '${shoulderCtrl.text}"';
                     });
+                    chestCtrl.dispose();
+                    waistCtrl.dispose();
+                    shoulderCtrl.dispose();
                     Navigator.pop(context);
                   },
                   child: const Text(
@@ -322,6 +336,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     } catch (e) {
       _showSnackBar('Error saving design: ${e.toString()}', Colors.redAccent);
     } finally {
+      // 'final' কীওয়ার্ডটি এখানে সংশোধন করে 'finally' করা হয়েছে
       if (mounted) setState(() => _isSavingDesign = false);
     }
   }
@@ -354,9 +369,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // ডায়ালগটি বন্ধ করবে
-
-              // ইউজারের সিলেক্ট করা ডাটা ডাইরেক্ট জেনারেটর পেজে পাঠানো হচ্ছে
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -381,7 +394,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  // ডায়নামিক কালার রিটার্ন করার ফাংশন
   Color? _getColorFromName(String colorName) {
     switch (colorName) {
       case 'Midnight Black':
@@ -434,10 +446,8 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ১. এডিটেবল AI বডি স্ক্যান প্রোফাইল কার্ড
                   _buildAiProfileCard(),
                   const SizedBox(height: 24),
-
                   const Text(
                     'Customize Your Outfit',
                     style: TextStyle(
@@ -447,7 +457,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
                   _buildSelectionSection(
                     title: 'Fabric & Material',
                     icon: Icons.texture_outlined,
@@ -462,7 +471,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     selectedValue: _selectedFabric,
                     onSelected: (val) => setState(() => _selectedFabric = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Pattern & Texture',
                     icon: Icons.grain_outlined,
@@ -477,7 +485,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     selectedValue: _selectedPattern,
                     onSelected: (val) => setState(() => _selectedPattern = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Silhouette & Fit',
                     icon: Icons.accessibility_new_outlined,
@@ -492,7 +499,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedSilhouette = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Neckline & Sleeves Style',
                     icon: Icons.dry_cleaning_outlined,
@@ -506,7 +512,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedNecklineSleeves = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Styling Details',
                     icon: Icons.auto_awesome_outlined,
@@ -521,7 +526,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedStylingDetail = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Length & Occasion',
                     icon: Icons.celebration_outlined,
@@ -535,9 +539,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedLengthOccasion = val),
                   ),
-
                   const Divider(height: 40, thickness: 1),
-
                   const Text(
                     'CLO Color Calibration',
                     style: TextStyle(
@@ -547,8 +549,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // ডাইনামিক কালার চিপস
                   _buildSelectionSection(
                     title: 'Base Color (Primary Tone)',
                     icon: Icons.palette_outlined,
@@ -564,7 +564,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                         setState(() => _selectedBaseColor = val),
                     isColorPicker: true,
                   ),
-
                   _buildSelectionSection(
                     title: 'Accent Color (Highlights)',
                     icon: Icons.colorize_outlined,
@@ -580,7 +579,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                         setState(() => _selectedAccentColor = val),
                     isColorPicker: true,
                   ),
-
                   _buildSelectionSection(
                     title: 'Tone & Shade Theme',
                     icon: Icons.brightness_6_outlined,
@@ -594,7 +592,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedToneShade = val),
                   ),
-
                   _buildSelectionSection(
                     title: 'Color Combination Rule',
                     icon: Icons.layers_outlined,
@@ -608,9 +605,7 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                     onSelected: (val) =>
                         setState(() => _selectedCombinationStyle = val),
                   ),
-
                   const SizedBox(height: 35),
-
                   GestureDetector(
                     onTap: _isSavingDesign ? null : _saveDressDesign,
                     child: Container(
@@ -660,7 +655,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  // রিয়েল-টাইম এডিটেবল AI বডি স্ক্যান প্রোফাইল কার্ড
   Widget _buildAiProfileCard() {
     return Container(
       width: double.infinity,
@@ -700,7 +694,6 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                   ),
                 ],
               ),
-              // Edit Button Added Here
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -783,14 +776,13 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
     );
   }
 
-  // কাস্টমাইজেশনের জন্য ক্যাটাগরি চয়েস চিপস (With Dynamic Colors)
   Widget _buildSelectionSection({
     required String title,
     required IconData icon,
     required List<String> options,
     required String selectedValue,
     required ValueChanged<String> onSelected,
-    bool isColorPicker = false, // নতুন প্যারামিটার
+    bool isColorPicker = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
@@ -818,20 +810,15 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
             child: Row(
               children: options.map((option) {
                 final isSelected = option == selectedValue;
-
-                // কালার পিকার হলে আসল কালারটা জেনারেট করবে
                 Color? dynamicColor = isColorPicker
                     ? _getColorFromName(option)
                     : null;
-
-                // ব্যাকগ্রাউন্ড এবং টেক্সটের কালার লজিক
                 Color chipBgColor = isSelected
                     ? (dynamicColor ?? const Color(0xFF111827))
                     : Colors.white;
 
                 Color textColor;
                 if (isSelected) {
-                  // যদি ডাইনামিক কালার খুব উজ্জ্বল (Light) হয়, তাহলে টেক্সট কালো হবে, নাহলে সাদা
                   textColor =
                       (dynamicColor != null &&
                           dynamicColor.computeLuminance() > 0.6)
@@ -844,6 +831,8 @@ class _DesignStudioScreenState extends State<DesignStudioScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ChoiceChip(
+                    showCheckmark:
+                        false, // চিপ দেখতে সুন্দর করার জন্য ডিফল্ট টিকমার্ক হাইড করা হলো
                     label: Text(
                       option,
                       style: TextStyle(

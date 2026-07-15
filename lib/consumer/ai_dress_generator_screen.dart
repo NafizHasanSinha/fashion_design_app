@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
 
 class AiDressGeneratorScreen extends StatefulWidget {
-  // আগের পেজ (Design Studio) থেকে এই ডাটাগুলো পাস করতে পারেন।
-  // আপাতত ডেমো হিসেবে কিছু ডিফল্ট ভ্যালু দেওয়া আছে।
   final String fittedFor;
   final String fabricAndDesign;
   final String colorPalette;
@@ -22,7 +26,8 @@ class AiDressGeneratorScreen extends StatefulWidget {
 class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
   late String _imageUrl;
   bool _isLoading = true;
-  int _randomSeed = Random().nextInt(10000); // নতুন ছবি জেনারেট করার জন্য
+  bool _isExporting = false; // এক্সপোর্ট করার সময় লোডার দেখানোর জন্য
+  int _randomSeed = Random().nextInt(10000);
 
   @override
   void initState() {
@@ -30,13 +35,12 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
     _generateDressImage();
   }
 
-  // ইউজারের সিলেক্ট করা ডাটা দিয়ে ডাইনামিক প্রম্পট তৈরি করে ছবি জেনারেট করার ফাংশন
   void _generateDressImage() {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
-    // ইউজারের সিলেক্ট করা পছন্দগুলোকে প্রম্পটে রূপান্তর করা হচ্ছে
     String prompt =
         "High fashion photography, a highly detailed realistic dress design. "
         "Style: ${widget.fabricAndDesign}. "
@@ -44,14 +48,11 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
         "Target body: ${widget.fittedFor}. "
         "Studio lighting, 8k resolution, highly detailed fashion editorial.";
 
-    // URL এনকোড করে Pollinations AI এর ফ্রি লিঙ্ক তৈরি করা হচ্ছে
     String encodedPrompt = Uri.encodeComponent(prompt);
 
-    // seed যুক্ত করা হয়েছে যাতে "Regenerate" এ ক্লিক করলে নতুন ছবি আসে
     _imageUrl =
         'https://image.pollinations.ai/prompt/$encodedPrompt?width=768&height=1024&seed=$_randomSeed&nologo=true';
 
-    // সিমুলেটেড লোডিং টাইম
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
@@ -63,17 +64,172 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
 
   void _regenerateDesign() {
     setState(() {
-      _randomSeed = Random().nextInt(10000); // নতুন সিড মানে নতুন ডিজাইন
+      _randomSeed = Random().nextInt(10000);
       _generateDressImage();
     });
+  }
+
+  // --- ইমেজ এক্সপোর্ট করার মেইন লজিক ---
+  Future<void> _exportAsImage() async {
+    if (!mounted) return;
+    setState(() => _isExporting = true);
+    try {
+      // ১. ইউআরএল থেকে ইমেজের বাইট ডাটা ডাউনলোড করা
+      final response = await http.get(Uri.parse(_imageUrl));
+      if (response.statusCode == 200) {
+        // ২. লোকাল ক্যাশ ডিরেক্টরি খুঁজে ফাইল তৈরি করা
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/AI_Dress_Design_$_randomSeed.jpg');
+
+        // ৩. ফাইলে বাইট রাইট করা
+        await file.writeAsBytes(response.bodyBytes);
+
+        // ৪. ইউজারকে ফাইলটি শেয়ার/ডাউনলোড করার পপআপ দেখানো
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: 'Check out my AI Dress Design!');
+      } else {
+        throw Exception("Failed to download image from server");
+      }
+    } catch (e) {
+      _showErrorSnackBar("Failed to export image: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  // --- পিডিএফ এক্সপোর্ট করার মেইন লজিক ---
+  Future<void> _exportAsPdf() async {
+    if (!mounted) return;
+    setState(() => _isExporting = true);
+    try {
+      // ১. ইমেজ ডাটা ডাউনলোড
+      final response = await http.get(Uri.parse(_imageUrl));
+      if (response.statusCode == 200) {
+        final pdf = pw.Document();
+
+        // ২. ডাউনলোডেড ইমেজ দিয়ে PDF পেজ লেআউট তৈরি করা
+        final image = pw.MemoryImage(response.bodyBytes);
+        pdf.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context context) {
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    "AI Dress Generation Specs Sheet",
+                    style: pw.TextStyle(
+                      fontSize: 22,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Text("Fitted For: ${widget.fittedFor}"),
+                  pw.Text("Fabric & Design: ${widget.fabricAndDesign}"),
+                  pw.Text("Color Palette: ${widget.colorPalette}"),
+                  pw.SizedBox(height: 20),
+                  pw.Expanded(
+                    child: pw.Center(
+                      child: pw.Image(image, fit: pw.BoxFit.contain),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+
+        // ৩. পিডিএফ ফাইলটি মেমরিতে সাময়িকভাবে সেভ করা
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/AI_Dress_Design_$_randomSeed.pdf');
+        await file.writeAsBytes(await pdf.save());
+
+        // ৪. ইউজারকে শেয়ার করার অপশন দেওয়া
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: 'Exported PDF Blueprint');
+      } else {
+        throw Exception("Failed to prepare PDF asset");
+      }
+    } catch (e) {
+      _showErrorSnackBar("Failed to export PDF: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  // বটম শিট ওপেন করে ইউজারকে ইমেজ নাকি পিডিএফ চান তা জিজ্ঞেস করা
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E232D),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "Export Options",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.image, color: Colors.blueAccent),
+                title: const Text(
+                  "Save/Share as Image",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportAsImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.picture_as_pdf,
+                  color: Colors.redAccent,
+                ),
+                title: const Text(
+                  "Save/Share as PDF",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportAsPdf();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF151923,
-      ), // স্ক্রিনশটের মতো ডার্ক ব্যাকগ্রাউন্ড
+      backgroundColor: const Color(0xFF151923),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -85,6 +241,25 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (!_isLoading)
+            _isExporting
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.blueAccent,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.ios_share, color: Colors.white),
+                    onPressed: _showExportOptions,
+                  ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -120,7 +295,6 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
                       : Image.network(
                           _imageUrl,
                           fit: BoxFit.cover,
-                          // লোড হওয়ার সময় সুন্দর প্রগ্রেস দেখানোর জন্য
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
@@ -129,7 +303,6 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
                               ),
                             );
                           },
-                          // যদি কোনো কারণে ছবি লোড না হয় (Error Handling)
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(
                               child: Column(
@@ -155,7 +328,7 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ২. রেন্ডারিং ব্লুপ্রিন্ট (ইউজারের সিলেক্ট করা ডাটা)
+            // ২. রেন্ডারিং ব্লুপ্রিন্ট
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -243,7 +416,6 @@ class _AiDressGeneratorScreenState extends State<AiDressGeneratorScreen> {
     );
   }
 
-  // ব্লুপ্রিন্টের টেক্সট বানানোর হেল্পার মেথড
   Widget _buildBlueprintText(String title, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),

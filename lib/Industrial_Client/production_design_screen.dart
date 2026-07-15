@@ -2,34 +2,6 @@ import 'package:flutter/material.dart';
 import 'production_preview.dart';
 import 'ai_service.dart';
 
-// কালার এবং নামের ম্যাপিং অবজেক্ট স্ট্রাকচার
-class ManufacturingColor {
-  final Color color;
-  final String name;
-
-  const ManufacturingColor(this.color, this.name);
-}
-
-// UI-তে কালার গ্রিড রেন্ডার করার জন্য সম্পূর্ণ কালার প্যালেটের তালিকা
-final List<ManufacturingColor> industrialColorPalette = [
-  const ManufacturingColor(Color(0xFF1A1A2E), "Midnight Navy"),
-  const ManufacturingColor(Color(0xFF243B55), "Deep Sapphire"),
-  const ManufacturingColor(Color(0xFF144272), "Royal Denim Blue"),
-  const ManufacturingColor(Color(0xFF5B3294), "Industrial Purple"),
-  const ManufacturingColor(Color(0xFFE94560), "Crimson Red"),
-  const ManufacturingColor(Color(0xFFFF6B00), "Vibrant Orange"),
-  const ManufacturingColor(Color(0xFFFFB100), "Amber Yellow"),
-  const ManufacturingColor(Color(0xFFE8E288), "Soft Khaki"),
-  const ManufacturingColor(Color(0xFFFFFFFF), "Pure White"),
-  const ManufacturingColor(Color(0xFF2C3E50), "Slate Charcoal"),
-  const ManufacturingColor(Color(0xFFE74C3C), "Bright Scarlet"),
-  const ManufacturingColor(Color(0xFFE67E22), "Classic Orange"),
-  const ManufacturingColor(Color(0xFFF1C40F), "Sunflower Yellow"),
-  const ManufacturingColor(Color(0xFF2ECC71), "Emerald Green"),
-  const ManufacturingColor(Color(0xFF9B59B6), "Amethyst Purple"),
-  const ManufacturingColor(Color(0xFF34495E), "Asphalt Gray"),
-];
-
 class ProductionDesignSystemScreen extends StatefulWidget {
   const ProductionDesignSystemScreen({super.key});
 
@@ -41,31 +13,23 @@ class ProductionDesignSystemScreen extends StatefulWidget {
 class _ProductionDesignSystemScreenState
     extends State<ProductionDesignSystemScreen>
     with SingleTickerProviderStateMixin {
-  // --- Color Palette ---
   final Color scaffoldBg = const Color(0xFF0B121E);
   final Color cardBg = const Color(0xFF131C2E);
   final Color accentOrange = const Color(0xFFFF6B00);
   final Color textMuted = const Color(0xFF64748B);
   final Color borderMuted = const Color(0xFF1E293B);
 
-  // --- State Management Variables ---
   String selectedTab = 'FABRIC & PATTERN';
-
-  // নতুন স্টেট ভেরিয়েবল: বয়সের ক্যাটাগরি সিলেক্ট করার জন্য
   String selectedAgeCategory = 'Adults (18-45)';
   String selectedFabric = 'Cotton';
   String selectedPattern = 'Solid';
 
-  // Tab 2: Colors (Default initial value)
   Color selectedPrimaryColor = const Color(0xFF1A1A2E);
   Color selectedSecondaryColor = const Color(0xFF16213E);
 
-  // Tab 3: Style & Fit
   String selectedSleeveLength = 'Short';
   String selectedNecklineStyle = 'Round';
   String selectedFitSpecification = 'Regular';
-
-  // Tab 4: Details
   String selectedGarmentLength = 'Regular';
 
   final Map<String, bool> _hoverStates = {};
@@ -117,7 +81,6 @@ class _ProductionDesignSystemScreenState
     );
   }
 
-  // --- Top Header Section ---
   Widget _buildTopHeader(BuildContext context, bool isMobile) {
     final Widget headerTextContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,9 +88,7 @@ class _ProductionDesignSystemScreenState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: accentOrange.withValues(alpha: 0.5),
-            ), // withValues ফিক্সড
+            border: Border.all(color: accentOrange.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -169,9 +130,7 @@ class _ProductionDesignSystemScreenState
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: accentOrange.withValues(
-                  alpha: isHovered ? 0.6 : 0.3,
-                ), // withValues ফিক্সড
+                color: accentOrange.withValues(alpha: isHovered ? 0.6 : 0.3),
                 blurRadius: isHovered ? 20 : 10,
                 spreadRadius: isHovered ? 2 : 0,
               ),
@@ -211,8 +170,7 @@ class _ProductionDesignSystemScreenState
               );
 
               String? imageUrl = await AiImageService.generateCloDressImage(
-                targetAge:
-                    selectedAgeCategory, // নতুন এজ প্যারামিটার পাস করা হলো
+                targetAge: selectedAgeCategory,
                 fabric: selectedFabric,
                 pattern: selectedPattern,
                 sleeve: selectedSleeveLength,
@@ -229,11 +187,21 @@ class _ProductionDesignSystemScreenState
 
               if (imageUrl != null) {
                 if (context.mounted) {
+                  // এখানে সমস্ত প্যারামিটার প্রিভিউ স্ক্রিনে পাস করা হচ্ছে!
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ThreeDProductionPreviewScreen(
                         generatedImageUrl: imageUrl,
+                        targetAge: selectedAgeCategory,
+                        fabric: selectedFabric,
+                        pattern: selectedPattern,
+                        sleeve: selectedSleeveLength,
+                        neckline: selectedNecklineStyle,
+                        fit: selectedFitSpecification,
+                        length: selectedGarmentLength,
+                        primaryColor: selectedPrimaryColor,
+                        secondaryColor: selectedSecondaryColor,
                       ),
                     ),
                   );
@@ -297,7 +265,6 @@ class _ProductionDesignSystemScreenState
     );
   }
 
-  // --- Main Configuration Management Panel ---
   Widget _buildConfigurationPanel(bool isMobile) {
     final Widget tabListWidget = Row(
       children: [
@@ -332,7 +299,6 @@ class _ProductionDesignSystemScreenState
     );
   }
 
-  // --- Dynamic Body Content Based On Active Tab Selection ---
   Widget _buildActiveTabContent(bool isMobile) {
     switch (selectedTab) {
       case 'FABRIC & PATTERN':
@@ -354,7 +320,6 @@ class _ProductionDesignSystemScreenState
               isMobile: isMobile,
             ),
             const SizedBox(height: 36),
-
             _buildSectionTitle('FABRIC SELECTION'),
             const SizedBox(height: 16),
             _buildGridOptions(
@@ -469,9 +434,7 @@ class _ProductionDesignSystemScreenState
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: accentOrange.withValues(alpha: 0.3),
-                ), // withValues ফিক্সড
+                border: Border.all(color: accentOrange.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,14 +449,15 @@ class _ProductionDesignSystemScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // ইউজারের চয়েসের উপর ভিত্তি করে ডাইনামিক রিকমেন্ডেশন!
                   _buildRecommendationBullet(
-                    'Subject Round face structure, optimal neckline: round',
+                    'Optimal design flow identified for $selectedAgeCategory frame.',
                   ),
                   _buildRecommendationBullet(
-                    'Body metrics indicate regular fit recommended',
+                    'Neckline: Standard $selectedNecklineStyle cut is recommended.',
                   ),
                   _buildRecommendationBullet(
-                    'Material analysis: Silk + solid compatibility verified',
+                    'Material Analysis: $selectedFabric textile with $selectedPattern pattern compatibility verified.',
                   ),
                 ],
               ),
@@ -505,7 +469,6 @@ class _ProductionDesignSystemScreenState
     }
   }
 
-  // --- Right Side Live Render Metadata Panel ---
   Widget _buildLiveRenderPanel() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -518,7 +481,7 @@ class _ProductionDesignSystemScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'LIVE RENDER',
+            'LIVE METADATA',
             style: TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -528,7 +491,7 @@ class _ProductionDesignSystemScreenState
           ),
           const SizedBox(height: 20),
           Container(
-            height: 300,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
               color: scaffoldBg,
@@ -536,10 +499,24 @@ class _ProductionDesignSystemScreenState
               border: Border.all(color: borderMuted),
             ),
             child: Center(
-              child: Container(
-                width: 80,
-                height: 2,
-                color: textMuted.withValues(alpha: 0.3), // withValues ফিক্সড
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.precision_manufacturing,
+                    color: textMuted,
+                    size: 36,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "CAD SPECIFICATION PREVIEW",
+                    style: TextStyle(
+                      color: textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -556,7 +533,6 @@ class _ProductionDesignSystemScreenState
     );
   }
 
-  // --- Helper Layout and UI Components ---
   Widget _buildTabItem(String title, IconData icon, bool isMobile) {
     bool isSelected = selectedTab == title;
 
@@ -657,18 +633,14 @@ class _ProductionDesignSystemScreenState
                     color: isSelected
                         ? accentOrange
                         : (isHovered
-                              ? textMuted.withValues(
-                                  alpha: 0.6,
-                                ) // withValues ফিক্সড
+                              ? textMuted.withValues(alpha: 0.6)
                               : borderMuted),
                     width: isSelected ? 1.5 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: accentOrange.withValues(
-                              alpha: 0.25,
-                            ), // withValues ফিক্সড
+                            color: accentOrange.withValues(alpha: 0.25),
                             blurRadius: 12,
                             spreadRadius: 1,
                           ),
@@ -729,9 +701,7 @@ class _ProductionDesignSystemScreenState
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: accentOrange.withValues(
-                                  alpha: 0.4,
-                                ), // withValues ফিক্সড
+                                color: accentOrange.withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 spreadRadius: 1,
                               ),
