@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'industrial_overlays.dart'; // industrial_overlays.dart file import thakbe
 
 class ThreeDProductionPreviewScreen extends StatefulWidget {
   final String? generatedImageUrl; // AI dynamic image URL receiver token
@@ -11,6 +10,7 @@ class ThreeDProductionPreviewScreen extends StatefulWidget {
       _ThreeDProductionPreviewScreenState();
 }
 
+// এখানে `extends State<ThreeDProductionPreviewScreen>` মিস হওয়ার কারণেই সব এরর আসছিল
 class _ThreeDProductionPreviewScreenState
     extends State<ThreeDProductionPreviewScreen>
     with SingleTickerProviderStateMixin {
@@ -141,6 +141,9 @@ class _ThreeDProductionPreviewScreenState
       ),
       onPressed: () {
         // CAD design export action handler
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Exporting CAD Simulation Data...')),
+        );
       },
       icon: const Icon(Icons.download_rounded, color: Colors.white, size: 18),
       label: const Text(
@@ -150,12 +153,10 @@ class _ThreeDProductionPreviewScreenState
     );
   }
 
-  // ২. LIVE CANVAS RENDER AREA - Mobile device height constraint safely handling adaptive grid
+  // ২. LIVE CANVAS RENDER AREA - Adaptive grid setup
   Widget _buildLiveCanvasArea(bool isMobile) {
     return Container(
-      height: isMobile
-          ? 360
-          : 520, // Adaptive height mapping logic to clear 188px overflow perfectly
+      height: isMobile ? 360 : 520,
       width: double.infinity,
       decoration: BoxDecoration(
         color: darkCardBg,
@@ -248,7 +249,7 @@ class _ThreeDProductionPreviewScreenState
                   ),
           ),
 
-          // Canvas Control Action Floating Board (Bottom Row Overlay)
+          // Canvas Control Action Floating Board (withValues ফিক্সড)
           Positioned(
             bottom: 16,
             left: 16,
@@ -256,7 +257,9 @@ class _ThreeDProductionPreviewScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: scaffoldBg.withValues(alpha: 0.85),
+                color: scaffoldBg.withValues(
+                  alpha: 0.85,
+                ), // Deprecated withOpacity ফিক্সড
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: borderMuted),
               ),
@@ -286,7 +289,9 @@ class _ThreeDProductionPreviewScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(
+              alpha: 0.05,
+            ), // Deprecated withOpacity ফিক্সড
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -322,21 +327,30 @@ class _ThreeDProductionPreviewScreenState
           // Modify Pattern Spec Button Wrapper
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
+            child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: accentOrange),
+                side: BorderSide(color: accentOrange, width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
+              icon: Icon(Icons.edit_note_rounded, color: accentOrange),
               onPressed: () {
-                EditDesignDialog.show(
-                  context,
-                ); // Dialog overlay trigger context map
+                // ইউজার এই এডিট অপশনটি প্রেস করলে পপ হয়ে সরাসরি আগের এডিটিং উইন্ডোতে ব্যাক করবে
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      "Returned to Studio Panel. Modify options and click 'GENERATE PREVIEW' again.",
+                    ),
+                    backgroundColor: accentOrange,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
               },
-              child: Text(
-                "Modify Pattern Specs",
+              label: Text(
+                "Change & Edit Design",
                 style: TextStyle(
                   color: accentOrange,
                   fontWeight: FontWeight.bold,
@@ -349,7 +363,6 @@ class _ThreeDProductionPreviewScreenState
     );
   }
 
-  // ৩. Metadata Meta Table Row - Text clip wrapping prevention with Expanded
   Widget _buildRowData(
     String leftLabel,
     String rightValue,
@@ -375,8 +388,7 @@ class _ThreeDProductionPreviewScreenState
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
-              overflow: TextOverflow
-                  .ellipsis, // Label text line wrapping safety control
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 8),

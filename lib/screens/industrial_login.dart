@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // সুপাবেস ক্লায়েন্ট ব্যবহারের জন্য যুক্ত করা হলো
-import '../Industrial_Client/design_studio.dart';
 import '../screens/auth_service.dart';
+import '../Industrial_Client/production_design_screen.dart';
 
 class IndustrialLoginForm extends StatefulWidget {
   final Color textColor;

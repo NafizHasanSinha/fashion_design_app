@@ -28,7 +28,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # লক্ষ্য করুন: flutter-এর নিচে ২টি স্পেস দিয়ে assets লিখতে হবে
   assets:
-    - .env  
+    - .env

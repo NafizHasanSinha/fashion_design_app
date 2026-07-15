@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
-// Check and ensure the correct import path for your project setup
 import 'production_preview.dart';
-import 'ai_service.dart'; // ১. AI Service import add kora holo
+import 'ai_service.dart';
+
+// কালার এবং নামের ম্যাপিং অবজেক্ট স্ট্রাকচার
+class ManufacturingColor {
+  final Color color;
+  final String name;
+
+  const ManufacturingColor(this.color, this.name);
+}
+
+// UI-তে কালার গ্রিড রেন্ডার করার জন্য সম্পূর্ণ কালার প্যালেটের তালিকা
+final List<ManufacturingColor> industrialColorPalette = [
+  const ManufacturingColor(Color(0xFF1A1A2E), "Midnight Navy"),
+  const ManufacturingColor(Color(0xFF243B55), "Deep Sapphire"),
+  const ManufacturingColor(Color(0xFF144272), "Royal Denim Blue"),
+  const ManufacturingColor(Color(0xFF5B3294), "Industrial Purple"),
+  const ManufacturingColor(Color(0xFFE94560), "Crimson Red"),
+  const ManufacturingColor(Color(0xFFFF6B00), "Vibrant Orange"),
+  const ManufacturingColor(Color(0xFFFFB100), "Amber Yellow"),
+  const ManufacturingColor(Color(0xFFE8E288), "Soft Khaki"),
+  const ManufacturingColor(Color(0xFFFFFFFF), "Pure White"),
+  const ManufacturingColor(Color(0xFF2C3E50), "Slate Charcoal"),
+  const ManufacturingColor(Color(0xFFE74C3C), "Bright Scarlet"),
+  const ManufacturingColor(Color(0xFFE67E22), "Classic Orange"),
+  const ManufacturingColor(Color(0xFFF1C40F), "Sunflower Yellow"),
+  const ManufacturingColor(Color(0xFF2ECC71), "Emerald Green"),
+  const ManufacturingColor(Color(0xFF9B59B6), "Amethyst Purple"),
+  const ManufacturingColor(Color(0xFF34495E), "Asphalt Gray"),
+];
 
 class ProductionDesignSystemScreen extends StatefulWidget {
   const ProductionDesignSystemScreen({super.key});
@@ -24,11 +51,12 @@ class _ProductionDesignSystemScreenState
   // --- State Management Variables ---
   String selectedTab = 'FABRIC & PATTERN';
 
-  // Tab 1: Fabric & Pattern
+  // নতুন স্টেট ভেরিয়েবল: বয়সের ক্যাটাগরি সিলেক্ট করার জন্য
+  String selectedAgeCategory = 'Adults (18-45)';
   String selectedFabric = 'Cotton';
   String selectedPattern = 'Solid';
 
-  // Tab 2: Colors
+  // Tab 2: Colors (Default initial value)
   Color selectedPrimaryColor = const Color(0xFF1A1A2E);
   Color selectedSecondaryColor = const Color(0xFF16213E);
 
@@ -40,28 +68,7 @@ class _ProductionDesignSystemScreenState
   // Tab 4: Details
   String selectedGarmentLength = 'Regular';
 
-  // Map to track hover states for modern UX interactions
   final Map<String, bool> _hoverStates = {};
-
-  // Pre-defined manufacturing color palette
-  final List<Color> colorPalette = [
-    const Color(0xFF1A1A2E),
-    const Color(0xFF243B55),
-    const Color(0xFF144272),
-    const Color(0xFF5B3294),
-    const Color(0xFFE94560),
-    const Color(0xFFFF6B00),
-    const Color(0xFFFFB100),
-    const Color(0xFFE8E288),
-    const Color(0xFFFFFFFF),
-    const Color(0xFF2C3E50),
-    const Color(0xFFE74C3C),
-    const Color(0xFFE67E22),
-    const Color(0xFFF1C40F),
-    const Color(0xFF2ECC71),
-    const Color(0xFF9B59B6),
-    const Color(0xFF34495E),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +79,6 @@ class _ProductionDesignSystemScreenState
       backgroundColor: scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
-          // ফিক্স ১: মোবাইলের জন্য প্যাডিং কমিয়ে ২০ করা হয়েছে যাতে স্ক্রিন স্পেস বাঁচে
           padding: EdgeInsets.all(isMobile ? 20.0 : 40.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +87,6 @@ class _ProductionDesignSystemScreenState
               SizedBox(height: isMobile ? 24 : 40),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  // Responsive Design Breakdown
                   if (constraints.maxWidth > 1000) {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +118,6 @@ class _ProductionDesignSystemScreenState
   }
 
   // --- Top Header Section ---
-  // ফিক্স ২: মোবাইলে টাইটেল এবং বাটন পাশাপাশি না রেখে Column এর মাধ্যমে ওপরে-নিচে রাখা হয়েছে
   Widget _buildTopHeader(BuildContext context, bool isMobile) {
     final Widget headerTextContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +125,9 @@ class _ProductionDesignSystemScreenState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            border: Border.all(color: accentOrange.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: accentOrange.withValues(alpha: 0.5),
+            ), // withValues ফিক্সড
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -139,7 +145,7 @@ class _ProductionDesignSystemScreenState
           'Production Design System',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 24, // মোবাইলের জন্য সামান্য ছোট সাইজ
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
           ),
@@ -163,16 +169,16 @@ class _ProductionDesignSystemScreenState
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: accentOrange.withValues(alpha: isHovered ? 0.6 : 0.3),
+                color: accentOrange.withValues(
+                  alpha: isHovered ? 0.6 : 0.3,
+                ), // withValues ফিক্সড
                 blurRadius: isHovered ? 20 : 10,
                 spreadRadius: isHovered ? 2 : 0,
               ),
             ],
           ),
           child: ElevatedButton.icon(
-            // ২. onPressed logic update kora holo (Async request handling grid)
             onPressed: () async {
-              // A. Modern Loading Dialog Overlay active kora
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -204,8 +210,9 @@ class _ProductionDesignSystemScreenState
                 ),
               );
 
-              // B. API Service call kore asynchronous computation handle kora
               String? imageUrl = await AiImageService.generateCloDressImage(
+                targetAge:
+                    selectedAgeCategory, // নতুন এজ প্যারামিটার পাস করা হলো
                 fabric: selectedFabric,
                 pattern: selectedPattern,
                 sleeve: selectedSleeveLength,
@@ -216,20 +223,17 @@ class _ProductionDesignSystemScreenState
                 secondaryColor: selectedSecondaryColor,
               );
 
-              // C. Async gap complete hole loading popup clear kora
               if (context.mounted) {
                 Navigator.pop(context);
               }
 
-              // D. Image null na hole router pass kora, error thakle message throw kora
               if (imageUrl != null) {
                 if (context.mounted) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ThreeDProductionPreviewScreen(
-                        generatedImageUrl:
-                            imageUrl, // Route dynamic URL token pass
+                        generatedImageUrl: imageUrl,
                       ),
                     ),
                   );
@@ -295,7 +299,6 @@ class _ProductionDesignSystemScreenState
 
   // --- Main Configuration Management Panel ---
   Widget _buildConfigurationPanel(bool isMobile) {
-    // ফিক্স ৩: মোবাইলে ৪টি ট্যাব পাশাপাশি আটবে না, তাই Horizontal Scrollable Row করা হয়েছে
     final Widget tabListWidget = Row(
       children: [
         _buildTabItem('FABRIC & PATTERN', Icons.layers_outlined, isMobile),
@@ -336,6 +339,22 @@ class _ProductionDesignSystemScreenState
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSectionTitle('TARGET AGE CATEGORY'),
+            const SizedBox(height: 16),
+            _buildGridOptions(
+              items: [
+                'Infants (0-2 Years)',
+                'Kids (3-12 Years)',
+                'Teens (13-17 Years)',
+                'Adults (18-45)',
+                'Senior Citizens (45+)',
+              ],
+              selectedValue: selectedAgeCategory,
+              onSelect: (val) => setState(() => selectedAgeCategory = val),
+              isMobile: isMobile,
+            ),
+            const SizedBox(height: 36),
+
             _buildSectionTitle('FABRIC SELECTION'),
             const SizedBox(height: 16),
             _buildGridOptions(
@@ -387,7 +406,7 @@ class _ProductionDesignSystemScreenState
               onColorSelect: (color) =>
                   setState(() => selectedPrimaryColor = color),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 40),
             _buildSectionTitle('SECONDARY COLOR (ACCENTS)'),
             const SizedBox(height: 16),
             _buildColorGrid(
@@ -450,7 +469,9 @@ class _ProductionDesignSystemScreenState
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accentOrange.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: accentOrange.withValues(alpha: 0.3),
+                ), // withValues ফিক্সড
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +528,7 @@ class _ProductionDesignSystemScreenState
           ),
           const SizedBox(height: 20),
           Container(
-            height: 300, // মোবাইলের সুবিধার্থে হাইট সামান্য কমানো হয়েছে
+            height: 300,
             width: double.infinity,
             decoration: BoxDecoration(
               color: scaffoldBg,
@@ -518,11 +539,12 @@ class _ProductionDesignSystemScreenState
               child: Container(
                 width: 80,
                 height: 2,
-                color: textMuted.withValues(alpha: 0.3),
+                color: textMuted.withValues(alpha: 0.3), // withValues ফিক্সড
               ),
             ),
           ),
           const SizedBox(height: 24),
+          _buildMetadataRow('TARGET AGE:', selectedAgeCategory.toUpperCase()),
           _buildMetadataRow('FABRIC:', selectedFabric.toUpperCase()),
           _buildMetadataRow('PATTERN:', selectedPattern.toUpperCase()),
           _buildMetadataRow('SLEEVE:', selectedSleeveLength.toUpperCase()),
@@ -547,9 +569,7 @@ class _ProductionDesignSystemScreenState
             duration: const Duration(milliseconds: 200),
             padding: EdgeInsets.symmetric(
               vertical: 20,
-              horizontal: isMobile
-                  ? 24
-                  : 0, // মোবাইলে স্ক্রোলের সুবিধার জন্য হরিজন্টাল প্যাডিং
+              horizontal: isMobile ? 24 : 0,
             ),
             decoration: BoxDecoration(
               color: isSelected ? accentOrange : Colors.transparent,
@@ -589,7 +609,6 @@ class _ProductionDesignSystemScreenState
       },
     );
 
-    // মোবাইলে Expanded সরালে আইটেমগুলো নিজস্ব জায়গা নিয়ে স্ক্রোল করতে পারবে
     return isMobile ? content : Expanded(child: content);
   }
 
@@ -623,11 +642,13 @@ class _ProductionDesignSystemScreenState
               onTap: () => onSelect(item),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                // ফিক্স ৪: মোবাইলের স্ক্রিন উইডথ অনুযায়ী আইটেম সাইজ যেন অটো এডজাস্ট হয়
                 width: isMobile
                     ? (MediaQuery.of(context).size.width - 64) / 2
-                    : 135,
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                    : 150,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 8,
+                ),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -636,14 +657,18 @@ class _ProductionDesignSystemScreenState
                     color: isSelected
                         ? accentOrange
                         : (isHovered
-                              ? textMuted.withValues(alpha: 0.6)
+                              ? textMuted.withValues(
+                                  alpha: 0.6,
+                                ) // withValues ফিক্সড
                               : borderMuted),
                     width: isSelected ? 1.5 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: accentOrange.withValues(alpha: 0.25),
+                            color: accentOrange.withValues(
+                              alpha: 0.25,
+                            ), // withValues ফিক্সড
                             blurRadius: 12,
                             spreadRadius: 1,
                           ),
@@ -652,11 +677,12 @@ class _ProductionDesignSystemScreenState
                 ),
                 child: Text(
                   item,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isSelected
                         ? Colors.white
                         : (isHovered ? Colors.white : textMuted),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),
@@ -673,43 +699,65 @@ class _ProductionDesignSystemScreenState
     required Function(Color) onColorSelect,
   }) {
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: colorPalette.map((color) {
-        bool isSelected = selectedColor == color;
-        String colorKey = color.toARGB32().toString();
-        return _buildHoverableWidget(
-          id: colorKey,
-          builder: (isHovered) {
-            return GestureDetector(
-              onTap: () => onColorSelect(color),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width:
-                    44, // মোবাইলে গ্রিড সুন্দর দেখানোর জন্য সামান্য সাইজ অপ্টিমাইজেশন
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? accentOrange
-                        : (isHovered ? Colors.white54 : Colors.transparent),
-                    width: isSelected ? 2.5 : 1,
+      spacing: 16,
+      runSpacing: 20,
+      children: industrialColorPalette.map((item) {
+        bool isSelected = selectedColor == item.color;
+        String colorKey = item.color.toARGB32().toString();
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHoverableWidget(
+              id: colorKey,
+              builder: (isHovered) {
+                return GestureDetector(
+                  onTap: () => onColorSelect(item.color),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: item.color,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? accentOrange
+                            : (isHovered ? Colors.white54 : Colors.transparent),
+                        width: isSelected ? 3.0 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: accentOrange.withValues(
+                                  alpha: 0.4,
+                                ), // withValues ফিক্সড
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : [],
+                    ),
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: accentOrange.withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : [],
+                );
+              },
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: 65,
+              child: Text(
+                item.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : textMuted,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
-            );
-          },
+            ),
+          ],
         );
       }).toList(),
     );

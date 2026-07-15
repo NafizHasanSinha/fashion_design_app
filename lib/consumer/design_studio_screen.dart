@@ -1,435 +1,876 @@
 import 'package:flutter/material.dart';
-import 'ai_scanning_screen.dart'; // ScanResult model class import
-import 'preview.dart'; // ThreeDPreviewScreen ebong PreviewData framework
-import 'ai_image_service.dart'; // Active API trigger service file
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'ai_dress_generator_screen.dart'; // ফাইল পাথ আপনার প্রজেক্ট অনুযায়ী ঠিক করে নেবেন
 
 class DesignStudioScreen extends StatefulWidget {
-  final ScanResult scanResult;
-
-  const DesignStudioScreen({super.key, required this.scanResult});
+  const DesignStudioScreen({super.key});
 
   @override
   State<DesignStudioScreen> createState() => _DesignStudioScreenState();
 }
 
 class _DesignStudioScreenState extends State<DesignStudioScreen> {
-  int _activeTabIndex = 0;
-  final AiImageService _aiImageService = AiImageService();
-  bool _isLoadingAI = false;
+  final SupabaseClient _supabase = Supabase.instance.client;
+  bool _isLoadingScan = true;
+  bool _isSavingDesign = false;
 
-  // 🟢 নতুন যুক্ত করা ভ্যারিয়েবল (Default: Women)
-  String _selectedUserType = 'Women';
+  // AI বডি স্ক্যান ডাটা ভেরিয়েবলস
+  String? _scanId;
+  String _genderGroupType = 'Woman'; // ডিফল্টভাবে মেয়েদের জন্য ফিক্স করা হলো
+  String _ageCategory = '18+';
+  String _skinTone = 'Medium Tan';
+  String _faceShape = 'Oval';
+  String _chestMeasurement = '34"';
+  String _waistMeasurement = '28"';
+  String _shoulderMeasurement = '15"';
 
-  // User-selected dynamic customization variables
+  // ইউজারের সিলেক্টেড ড্রেস কাস্টমাইজেশন অপশনস (Default Values)
   String _selectedFabric = 'Silk';
-  String _selectedPattern = 'Classic Checkered';
-  int _selectedPrimaryColorIndex = 4; // Default: White
-  int _selectedSecondaryColorIndex = 3; // Default: Red
-  String _selectedSleeveLength = 'Short Sleeve';
-  String _selectedNeckline = 'Round Neck';
+  String _selectedPattern = 'Minimal';
+  String _selectedSilhouette = 'A-Line';
+  String _selectedNecklineSleeves = 'Round Neck + Sleeveless';
+  String _selectedStylingDetail = 'Embroidery';
+  String _selectedLengthOccasion = 'Maxi + Party Wear';
 
-  final String _selectedFit = 'Regular Fit';
-  final String _selectedGarmentLength = 'Standard Regular';
+  // CLO Color Guides
+  String _selectedBaseColor = 'Midnight Black';
+  String _selectedAccentColor = 'Rich Gold';
+  String _selectedToneShade = 'Metallic/Royal';
+  String _selectedCombinationStyle = 'Duotone';
 
-  final List<Map<String, dynamic>> _colorSwatches = [
-    {'name': 'Midnight Navy', 'hex': '#1A1A2E'},
-    {'name': 'Deep Charcoal', 'hex': '#16213E'},
-    {'name': 'Royal Sapphire', 'hex': '#0F3460'},
-    {'name': 'Crimson Red', 'hex': '#E94560'},
-    {'name': 'Classic White', 'hex': '#FFFFFF'},
-    {'name': 'Matte Black', 'hex': '#000000'},
-  ];
-
-  final Color backgroundColor = const Color(0xFFF4F6F9);
-  final Color primaryDarkColor = const Color(0xFF111827);
-  final Color subtitleColor = const Color(0xFF718096);
-  final Color cardBgColor = Colors.white;
-  final Color outlineBorderColor = const Color(0xFFE2E8F0);
-
-  // 🟢 জেমিনি এআই-এর জন্য সম্পূর্ণ ডাইনামিক প্রম্পট ইঞ্জিন
-  String _buildCustomAiPrompt() {
-    final measurements = widget.scanResult.measurements;
-    final primaryColorName = _colorSwatches[_selectedPrimaryColorIndex]['name'];
-    final secondaryColorName =
-        _colorSwatches[_selectedSecondaryColorIndex]['name'];
-
-    // ইউজার টাইপ অনুযায়ী পোশাকের ধরন ডাইনামিক করা হচ্ছে
-    String garmentType = "casual outfit";
-    String modelAvatar = "model";
-
-    if (_selectedUserType == 'Boys') {
-      garmentType = "boy's t-shirt and pants clothing outfit";
-      modelAvatar = "young boy avatar";
-    } else if (_selectedUserType == 'Girls') {
-      garmentType = "girl's casual dress or frock";
-      modelAvatar = "young girl avatar";
-    } else if (_selectedUserType == 'Old Man') {
-      garmentType = "classic traditional senior man clothing outfit";
-      modelAvatar = "elderly senior man avatar";
-    } else if (_selectedUserType == 'Old Woman') {
-      garmentType = "elegant traditional senior woman dress";
-      modelAvatar = "elderly senior woman avatar";
-    } else if (_selectedUserType == 'Women') {
-      garmentType = "tailored modern woman's dress";
-      modelAvatar = "female avatar";
-    }
-
-    return "A professional studio lookbook 3D garment rendering of a $garmentType. "
-        "Fabric material: $_selectedFabric. Pattern design: $_selectedPattern with $primaryColorName as primary color and $secondaryColorName as secondary accent color lines. "
-        "Sleeve style: $_selectedSleeveLength, Neckline cut: $_selectedNeckline. "
-        "The clothing must be perfectly visualised on an $modelAvatar body posture matching specific measurements: "
-        "Shoulder: ${measurements['Shoulder'] ?? '16 in'}, Chest: ${measurements['Chest'] ?? '38 in'}, Waist: ${measurements['Waist'] ?? '32 in'}. "
-        "Solid simple light grey studio background, photorealistic high fashion textures.";
+  @override
+  void initState() {
+    super.initState();
+    _fetchLatestBodyScan();
   }
 
-  Future<void> _handlePreviewGenerationPipeline() async {
-    setState(() {
-      _isLoadingAI = true;
-    });
+  // সুপাবেস থেকে ইউজারের লেটেস্ট বডি স্ক্যান ডাটা রিট্রাইভ করার মেথড
+  Future<void> _fetchLatestBodyScan() async {
+    try {
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) {
+        setState(() => _isLoadingScan = false);
+        return;
+      }
 
-    final calculatedPrompt = _buildCustomAiPrompt();
+      final response = await _supabase
+          .from('body_scans')
+          .select()
+          .eq('user_id', currentUser.id)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
 
-    // 🟢 এআই সার্ভিস থেকে রিয়েল-টাইম জেনারেটেড ছবির লিঙ্ক বা ইউনিক ডাইনামিক লিঙ্ক নিয়ে আসা হচ্ছে
-    final String? serverGeneratedImageUrl = await _aiImageService
-        .generateDressImageFromPrompt(calculatedPrompt);
+      if (response != null) {
+        setState(() {
+          _scanId = response['id'];
+          // যদি ভুল করে ছেলেদের ডাটা আসে, তবুও ডিফল্ট Woman সেট করবে
+          String scannedGender = response['gender_group_type'] ?? 'Woman';
+          _genderGroupType =
+              scannedGender.contains('Man') || scannedGender.contains('Boy')
+              ? 'Woman'
+              : scannedGender;
 
-    setState(() {
-      _isLoadingAI = false;
-    });
-
-    if (serverGeneratedImageUrl != null) {
-      final productionPayload = {
-        'preview_image_url': serverGeneratedImageUrl,
-        'fabric': _selectedFabric,
-        'pattern': _selectedPattern,
-        'primary_color_hex': _colorSwatches[_selectedPrimaryColorIndex]['hex'],
-        'secondary_color_hex':
-            _colorSwatches[_selectedSecondaryColorIndex]['hex'],
-        'sleeve_length': _selectedSleeveLength,
-        'neckline': _selectedNeckline,
-        'fit':
-            '$_selectedUserType Style ($_selectedFit)', // ইউজার টাইপ ট্র্যাকিং
-        'length': _selectedGarmentLength,
-        'measurements': widget.scanResult.measurements,
-      };
-
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ThreeDPreviewScreen(
-              passedDataPayload: PreviewData.fromJson(productionPayload),
-            ),
-          ),
+          _ageCategory = response['age_category'] ?? '18+';
+          _skinTone = response['skin_tone'] ?? 'Medium Tan';
+          _faceShape = response['face_shape'] ?? 'Oval';
+          _chestMeasurement = response['chest_measurement'] ?? '34"';
+          _waistMeasurement = response['waist_measurement'] ?? '28"';
+          _shoulderMeasurement = response['shoulder_measurement'] ?? '15"';
+          _isLoadingScan = false;
+        });
+      } else {
+        setState(() => _isLoadingScan = false);
+        _showSnackBar(
+          'No prior AI Scan found. Using standard female template.',
+          Colors.orange,
         );
       }
+    } catch (e) {
+      setState(() => _isLoadingScan = false);
+      _showSnackBar('Error loading body profile: $e', Colors.redAccent);
+    }
+  }
+
+  // ইউজারের প্রোফাইল এডিট করার ডায়ালগ (ভুল ডেটা ঠিক করার জন্য)
+  void _showEditProfileDialog() {
+    final chestCtrl = TextEditingController(
+      text: _chestMeasurement.replaceAll('"', ''),
+    );
+    final waistCtrl = TextEditingController(
+      text: _waistMeasurement.replaceAll('"', ''),
+    );
+    final shoulderCtrl = TextEditingController(
+      text: _shoulderMeasurement.replaceAll('"', ''),
+    );
+
+    String tempGender = _genderGroupType;
+    String tempAge = _ageCategory;
+    String tempSkinTone = _skinTone;
+    String tempFaceShape = _faceShape;
+
+    // শুধুমাত্র মেয়েদের ক্যাটাগরি
+    final femaleGenders = ['Woman', 'Old Woman', 'Girl', 'Baby Girl'];
+    if (!femaleGenders.contains(tempGender)) tempGender = 'Woman';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Edit Body Profile',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: tempGender,
+                      decoration: const InputDecoration(
+                        labelText: 'Target Body (Female Only)',
+                      ),
+                      items: femaleGenders
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setDialogState(() => tempGender = val!),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value:
+                          [
+                            '18+',
+                            'Middle Age',
+                            'Old Age',
+                            'Baby',
+                          ].contains(tempAge)
+                          ? tempAge
+                          : '18+',
+                      decoration: const InputDecoration(
+                        labelText: 'Age Category',
+                      ),
+                      items: ['18+', 'Middle Age', 'Old Age', 'Baby']
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
+                      onChanged: (val) => setDialogState(() => tempAge = val!),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value:
+                          [
+                            'Fair Light',
+                            'Medium Tan',
+                            'Rich Warm Honey',
+                            'Deep Espresso',
+                          ].contains(tempSkinTone)
+                          ? tempSkinTone
+                          : 'Medium Tan',
+                      decoration: const InputDecoration(labelText: 'Skin Tone'),
+                      items:
+                          [
+                                'Fair Light',
+                                'Medium Tan',
+                                'Rich Warm Honey',
+                                'Deep Espresso',
+                              ]
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
+                      onChanged: (val) =>
+                          setDialogState(() => tempSkinTone = val!),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value:
+                          [
+                            'Oval',
+                            'Round',
+                            'Square',
+                            'Heart',
+                            'Diamond',
+                          ].contains(tempFaceShape)
+                          ? tempFaceShape
+                          : 'Oval',
+                      decoration: const InputDecoration(
+                        labelText: 'Face Shape',
+                      ),
+                      items: ['Oval', 'Round', 'Square', 'Heart', 'Diamond']
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setDialogState(() => tempFaceShape = val!),
+                    ),
+                    const SizedBox(height: 15),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Measurements (Inches)',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: chestCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Chest',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: waistCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Waist',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: shoulderCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Shoulder',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF111827),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _genderGroupType = tempGender;
+                      _ageCategory = tempAge;
+                      _skinTone = tempSkinTone;
+                      _faceShape = tempFaceShape;
+                      _chestMeasurement = '${chestCtrl.text}"';
+                      _waistMeasurement = '${waistCtrl.text}"';
+                      _shoulderMeasurement = '${shoulderCtrl.text}"';
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Save Profile',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // সুপাবেসে ডিজাইন সেভ করার মেথড
+  Future<void> _saveDressDesign() async {
+    setState(() => _isSavingDesign = true);
+
+    try {
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) throw Exception('Please login first!');
+
+      await _supabase.from('dress_designs').insert({
+        'user_id': currentUser.id,
+        'scan_id': _scanId,
+        'fabric_material': _selectedFabric,
+        'pattern_texture': _selectedPattern,
+        'silhouette_fit': _selectedSilhouette,
+        'neckline_sleeves': _selectedNecklineSleeves,
+        'styling_details': _selectedStylingDetail,
+        'length_occasion': _selectedLengthOccasion,
+        'base_color': _selectedBaseColor,
+        'accent_color': _selectedAccentColor,
+        'tone_shade': _selectedToneShade,
+        'combination_style': _selectedCombinationStyle,
+      });
+
+      if (mounted) {
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      _showSnackBar('Error saving design: ${e.toString()}', Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isSavingDesign = false);
+    }
+  }
+
+  void _showSnackBar(String message, Color bgColor) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: bgColor));
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.green, size: 28),
+            SizedBox(width: 10),
+            Text(
+              'Design Saved!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Your custom 3D CLO blueprint has been tailored to your AI measurements and saved successfully.',
+          style: TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // ডায়ালগটি বন্ধ করবে
+
+              // ইউজারের সিলেক্ট করা ডাটা ডাইরেক্ট জেনারেটর পেজে পাঠানো হচ্ছে
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AiDressGeneratorScreen(
+                    fittedFor:
+                        '$_genderGroupType ($_ageCategory, $_chestMeasurement/$_waistMeasurement/$_shoulderMeasurement)',
+                    fabricAndDesign:
+                        '$_selectedFabric, $_selectedPattern, $_selectedSilhouette',
+                    colorPalette:
+                        '$_selectedBaseColor with $_selectedAccentColor ($_selectedToneShade)',
+                  ),
+                ),
+              );
+            },
+            child: const Text(
+              'Great!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ডায়নামিক কালার রিটার্ন করার ফাংশন
+  Color? _getColorFromName(String colorName) {
+    switch (colorName) {
+      case 'Midnight Black':
+        return const Color(0xFF111827);
+      case 'Ivory White':
+        return const Color(0xFFF8F9FA);
+      case 'Royal Blue':
+        return const Color(0xFF1D4ED8);
+      case 'Emerald Green':
+        return const Color(0xFF047857);
+      case 'Pastel Pink':
+        return const Color(0xFFFBCFE8);
+      case 'Rich Gold':
+        return const Color(0xFFF59E0B);
+      case 'Chrome Silver':
+        return const Color(0xFF9CA3AF);
+      case 'Crimson Red':
+        return const Color(0xFFE11D48);
+      case 'Copper Bronze':
+        return const Color(0xFFB45309);
+      default:
+        return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: Text(
-          'Design Studio',
+        title: const Text(
+          '3D CLO Design Studio',
           style: TextStyle(
-            color: primaryDarkColor,
             fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 18,
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Column(
-        children: [
-          _buildAiProfileBanner(),
-          _buildCategoryTabs(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: _buildActiveTabContent(),
-            ),
-          ),
-          _buildBottomActionBar(),
-        ],
-      ),
-    );
-  }
+      body: _isLoadingScan
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF111827)),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ১. এডিটেবল AI বডি স্ক্যান প্রোফাইল কার্ড
+                  _buildAiProfileCard(),
+                  const SizedBox(height: 24),
 
-  Widget _buildAiProfileBanner() {
-    return Container(
-      width: double.infinity,
-      color: primaryDarkColor,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        children: [
-          const Icon(Icons.bolt, color: Colors.amber, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'AI Scanner Profile Connected',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  'Tone: ${widget.scanResult.skinTone} • Chest: ${widget.scanResult.measurements['Chest']}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryTabs() {
-    final tabs = ['Target Profile', 'Fabric & Pattern', 'Sleeves & Neck'];
-    return Container(
-      color: Colors.white,
-      child: Row(
-        children: List.generate(tabs.length, (index) {
-          final isSelected = _activeTabIndex == index;
-          return Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _activeTabIndex = index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isSelected ? primaryDarkColor : Colors.transparent,
-                      width: 2,
+                  const Text(
+                    'Customize Your Outfit',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
                     ),
                   ),
-                ),
-                child: Text(
-                  tabs[index],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelected ? primaryDarkColor : subtitleColor,
+                  const SizedBox(height: 14),
+
+                  _buildSelectionSection(
+                    title: 'Fabric & Material',
+                    icon: Icons.texture_outlined,
+                    options: [
+                      'Silk',
+                      'Cotton',
+                      'Chiffon',
+                      'Denim',
+                      'Linen',
+                      'Velvet',
+                    ],
+                    selectedValue: _selectedFabric,
+                    onSelected: (val) => setState(() => _selectedFabric = val),
                   ),
-                ),
+
+                  _buildSelectionSection(
+                    title: 'Pattern & Texture',
+                    icon: Icons.grain_outlined,
+                    options: [
+                      'Minimal',
+                      'Checked',
+                      'Striped',
+                      'Floral',
+                      'Geometric',
+                      'Polka Dot',
+                    ],
+                    selectedValue: _selectedPattern,
+                    onSelected: (val) => setState(() => _selectedPattern = val),
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Silhouette & Fit',
+                    icon: Icons.accessibility_new_outlined,
+                    options: [
+                      'A-Line',
+                      'Fit-and-Flare',
+                      'Bodycon',
+                      'Asymmetrical',
+                      'Oversized',
+                    ],
+                    selectedValue: _selectedSilhouette,
+                    onSelected: (val) =>
+                        setState(() => _selectedSilhouette = val),
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Neckline & Sleeves Style',
+                    icon: Icons.dry_cleaning_outlined,
+                    options: [
+                      'Round Neck + Sleeveless',
+                      'V-Neck + Puff Sleeves',
+                      'Off-Shoulder + Full Sleeves',
+                      'Collar Neck + Half Sleeves',
+                    ],
+                    selectedValue: _selectedNecklineSleeves,
+                    onSelected: (val) =>
+                        setState(() => _selectedNecklineSleeves = val),
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Styling Details',
+                    icon: Icons.auto_awesome_outlined,
+                    options: [
+                      'Embroidery',
+                      'Waist Belt',
+                      'Classic Buttons',
+                      'Layered',
+                      'Draped folds',
+                    ],
+                    selectedValue: _selectedStylingDetail,
+                    onSelected: (val) =>
+                        setState(() => _selectedStylingDetail = val),
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Length & Occasion',
+                    icon: Icons.celebration_outlined,
+                    options: [
+                      'Maxi + Party Wear',
+                      'Midi + Corporate',
+                      'Mini + Casual Outing',
+                      'Ankle Length + Festive Couture',
+                    ],
+                    selectedValue: _selectedLengthOccasion,
+                    onSelected: (val) =>
+                        setState(() => _selectedLengthOccasion = val),
+                  ),
+
+                  const Divider(height: 40, thickness: 1),
+
+                  const Text(
+                    'CLO Color Calibration',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ডাইনামিক কালার চিপস
+                  _buildSelectionSection(
+                    title: 'Base Color (Primary Tone)',
+                    icon: Icons.palette_outlined,
+                    options: [
+                      'Midnight Black',
+                      'Ivory White',
+                      'Royal Blue',
+                      'Emerald Green',
+                      'Pastel Pink',
+                    ],
+                    selectedValue: _selectedBaseColor,
+                    onSelected: (val) =>
+                        setState(() => _selectedBaseColor = val),
+                    isColorPicker: true,
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Accent Color (Highlights)',
+                    icon: Icons.colorize_outlined,
+                    options: [
+                      'Rich Gold',
+                      'Chrome Silver',
+                      'Crimson Red',
+                      'Copper Bronze',
+                      'None',
+                    ],
+                    selectedValue: _selectedAccentColor,
+                    onSelected: (val) =>
+                        setState(() => _selectedAccentColor = val),
+                    isColorPicker: true,
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Tone & Shade Theme',
+                    icon: Icons.brightness_6_outlined,
+                    options: [
+                      'Metallic/Royal',
+                      'Soft Pastel',
+                      'Matte Dark',
+                      'Vibrant Bright',
+                    ],
+                    selectedValue: _selectedToneShade,
+                    onSelected: (val) =>
+                        setState(() => _selectedToneShade = val),
+                  ),
+
+                  _buildSelectionSection(
+                    title: 'Color Combination Rule',
+                    icon: Icons.layers_outlined,
+                    options: [
+                      'Duotone',
+                      'Monochrome',
+                      'Multicolor Gradient',
+                      'Split Contrast',
+                    ],
+                    selectedValue: _selectedCombinationStyle,
+                    onSelected: (val) =>
+                        setState(() => _selectedCombinationStyle = val),
+                  ),
+
+                  const SizedBox(height: 35),
+
+                  GestureDetector(
+                    onTap: _isSavingDesign ? null : _saveDressDesign,
+                    child: Container(
+                      width: double.infinity,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111827),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: _isSavingDesign
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.save_alt_outlined,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Save Design & Generate',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-          );
-        }),
-      ),
     );
   }
 
-  Widget _buildActiveTabContent() {
-    switch (_activeTabIndex) {
-      case 0: // 🟢 নতুন যুক্ত করা প্রথম ট্যাব: Target Profile (Boys, Girls, Old Man...)
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Who is this design for? (Target Profile)'),
-            _buildSelectionChips(
-              ['Women', 'Boys', 'Girls', 'Old Man', 'Old Woman'],
-              _selectedUserType,
-              (val) => setState(() => _selectedUserType = val),
-            ),
-          ],
-        );
-      case 1:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Select Fabric Material'),
-            _buildSelectionChips(
-              ['Silk', 'Cotton Pure', 'Premium Linen', 'Velvet Luxury'],
-              _selectedFabric,
-              (val) => setState(() => _selectedFabric = val),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Select Design Pattern'),
-            _buildSelectionChips(
-              [
-                'Classic Checkered',
-                'Solid Minimal',
-                'Vertical Stripes',
-                'Floral Artistic',
-              ],
-              _selectedPattern,
-              (val) => setState(() => _selectedPattern = val),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Primary Shade'),
-            _buildColorPaletteGrid(true),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Accent Shade'),
-            _buildColorPaletteGrid(false),
-          ],
-        );
-      case 2:
-      default:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Sleeve Configuration'),
-            _buildSelectionChips(
-              [
-                'Sleeveless style',
-                'Short Sleeve',
-                'Full Bishop Sleeve',
-                'Three-Quarter Cut',
-              ],
-              _selectedSleeveLength,
-              (val) => setState(() => _selectedSleeveLength = val),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Neckline Configuration'),
-            _buildSelectionChips(
-              [
-                'Round Neck',
-                'Mandarin Collar',
-                'Elegant V-Neck',
-                'Square Neckline',
-              ],
-              _selectedNeckline,
-              (val) => setState(() => _selectedNeckline = val),
-            ),
-          ],
-        );
-    }
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: primaryDarkColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectionChips(
-    List<String> options,
-    String currentSelected,
-    Function(String) onSelect,
-  ) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((opt) {
-        final isSelected = currentSelected == opt;
-        return ChoiceChip(
-          label: Text(opt),
-          selected: isSelected,
-          selectedColor: primaryDarkColor,
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : primaryDarkColor,
-            fontSize: 13,
-          ),
-          onSelected: (selected) {
-            if (selected) onSelect(opt);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildColorPaletteGrid(bool isPrimary) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 6,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-      ),
-      itemCount: _colorSwatches.length,
-      itemBuilder: (context, index) {
-        final swatch = _colorSwatches[index];
-        final hexColor = swatch['hex'].replaceAll('#', '');
-        final color = Color(int.parse('FF$hexColor', radix: 16));
-        final isSelected = isPrimary
-            ? _selectedPrimaryColorIndex == index
-            : _selectedSecondaryColorIndex == index;
-
-        return InkWell(
-          onTap: () {
-            setState(() {
-              if (isPrimary) {
-                _selectedPrimaryColorIndex = index;
-              } else {
-                _selectedSecondaryColorIndex = index;
-              }
-            });
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? primaryDarkColor : outlineBorderColor,
-                width: isSelected ? 3 : 1,
-              ),
-            ),
-            child: isSelected
-                ? Icon(
-                    Icons.check,
-                    color: color == Colors.white ? Colors.black : Colors.white,
-                    size: 20,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomActionBar() {
+  // রিয়েল-টাইম এডিটেবল AI বডি স্ক্যান প্রোফাইল কার্ড
+  Widget _buildAiProfileCard() {
     return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(20),
-      color: Colors.white,
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryDarkColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Color(0xFFF59E0B)),
+                  SizedBox(width: 8),
+                  Text(
+                    'AI Fitted Body Profile',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              // Edit Button Added Here
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(
+                  Icons.edit_note_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: _showEditProfileDialog,
+                tooltip: 'Modify Measurements',
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              _genderGroupType,
+              style: const TextStyle(
+                color: Colors.amber,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          onPressed: _isLoadingAI ? null : _handlePreviewGenerationPipeline,
-          child: _isLoadingAI
-              ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : const Text(
-                  'Preview Design',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildProfileItem('Age Group', _ageCategory),
+              _buildProfileItem('Skin Tone', _skinTone),
+              _buildProfileItem('Face Shape', _faceShape),
+            ],
+          ),
+          const Divider(color: Colors.white24, height: 24),
+          const Text(
+            'AI Precision Measurements (Inches):',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildProfileItem('Chest', _chestMeasurement),
+              _buildProfileItem('Waist', _waistMeasurement),
+              _buildProfileItem('Shoulder', _shoulderMeasurement),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white38, fontSize: 11),
         ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // কাস্টমাইজেশনের জন্য ক্যাটাগরি চয়েস চিপস (With Dynamic Colors)
+  Widget _buildSelectionSection({
+    required String title,
+    required IconData icon,
+    required List<String> options,
+    required String selectedValue,
+    required ValueChanged<String> onSelected,
+    bool isColorPicker = false, // নতুন প্যারামিটার
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: Colors.grey.shade600),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF374151),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: options.map((option) {
+                final isSelected = option == selectedValue;
+
+                // কালার পিকার হলে আসল কালারটা জেনারেট করবে
+                Color? dynamicColor = isColorPicker
+                    ? _getColorFromName(option)
+                    : null;
+
+                // ব্যাকগ্রাউন্ড এবং টেক্সটের কালার লজিক
+                Color chipBgColor = isSelected
+                    ? (dynamicColor ?? const Color(0xFF111827))
+                    : Colors.white;
+
+                Color textColor;
+                if (isSelected) {
+                  // যদি ডাইনামিক কালার খুব উজ্জ্বল (Light) হয়, তাহলে টেক্সট কালো হবে, নাহলে সাদা
+                  textColor =
+                      (dynamicColor != null &&
+                          dynamicColor.computeLuminance() > 0.6)
+                      ? Colors.black
+                      : Colors.white;
+                } else {
+                  textColor = Colors.black87;
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(
+                      option,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: chipBgColor,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: isSelected ? chipBgColor : Colors.grey.shade300,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) onSelected(option);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
