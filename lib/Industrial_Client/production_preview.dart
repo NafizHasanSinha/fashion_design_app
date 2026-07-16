@@ -238,7 +238,7 @@ class _ThreeDProductionPreviewScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentOrange.withOpacity(0.1),
+                      color: accentOrange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.image, color: accentOrange),
@@ -261,7 +261,7 @@ class _ThreeDProductionPreviewScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentCyan.withOpacity(0.1),
+                      color: accentCyan.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.picture_as_pdf, color: accentCyan),
@@ -364,7 +364,7 @@ class _ThreeDProductionPreviewScreenState
             ),
             if (_isExporting)
               Container(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -526,7 +526,7 @@ class _ThreeDProductionPreviewScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: scaffoldBg.withOpacity(0.85),
+                color: scaffoldBg.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: borderMuted),
               ),
@@ -561,7 +561,7 @@ class _ThreeDProductionPreviewScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -636,7 +636,6 @@ class _ThreeDProductionPreviewScreenState
     String leftLabel,
     String rightValue,
     bool isColor, {
-    Color? colorVal,
     bool isLast = false,
   }) {
     return Container(
